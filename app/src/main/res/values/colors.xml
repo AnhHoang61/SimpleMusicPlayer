@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#BB86FC</color>
+    <color name="purple_500">#6C5CE7</color>
+    <color name="purple_700">#4834D4</color>
+    <color name="teal_200">#03DAC5</color>
+    <color name="teal_700">#018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Custom Modern Dark Theme Colors -->
+    <color name="bg_dark">#121216</color>
+    <color name="surface_dark">#1E1E26</color>
+    <color name="surface_card">#252530</color>
+    <color name="surface_card_selected">#34304D</color>
+    <color name="primary_accent">#8C7CFF</color>
+    <color name="primary_accent_variant">#6C5CE7</color>
+    <color name="text_primary">#F8F9FA</color>
+    <color name="text_secondary">#9E9EA7</color>
+    <color name="text_muted">#63636E</color>
+    <color name="divider_color">#2C2C38</color>
+    <color name="accent_play">#00D2D3</color>
+    <color name="accent_heart">#FF6B6B</color>
+    <color name="bottom_nav_bg">#181820</color>
+</resources>
