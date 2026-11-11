@@ -1,4 +1,4 @@
-package com.example.simplemusicplayer;
+package com.example.simplemusicplayer.service;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -20,14 +20,25 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.IntentCompat;
 import androidx.media.MediaBrowserServiceCompat;
 import androidx.media.app.NotificationCompat.MediaStyle;
 import androidx.media.session.MediaButtonReceiver;
 
+import com.example.simplemusicplayer.MainActivity;
+import com.example.simplemusicplayer.R;
+import com.example.simplemusicplayer.model.Song;
+import com.example.simplemusicplayer.player.MusicPlayerManager;
+
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Foreground MediaBrowserServiceCompat providing background audio playback,
+ * lockscreen & notification media controls, and Android Auto integration.
+ */
 public class MusicService extends MediaBrowserServiceCompat {
+
     public static final String CHANNEL_ID = "v_music_playback_channel";
     public static final int NOTIFICATION_ID = 1001;
     public static final String MEDIA_ROOT_ID = "v_music_media_root";
@@ -50,9 +61,6 @@ public class MusicService extends MediaBrowserServiceCompat {
 
     private void setupMediaSession() {
         mediaSession = new MediaSessionCompat(this, "VMusicSession");
-        mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
-                              MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
-
         setSessionToken(mediaSession.getSessionToken());
 
         mediaSession.setCallback(new MediaSessionCompat.Callback() {
@@ -96,7 +104,7 @@ public class MusicService extends MediaBrowserServiceCompat {
     }
 
     public static void startOrUpdateService(Context context, Song song, boolean isPlaying) {
-        if (song == null) return;
+        if (song == null || context == null) return;
         Intent intent = new Intent(context, MusicService.class);
         intent.setAction(ACTION_UPDATE);
         intent.putExtra(EXTRA_SONG, song);
@@ -122,7 +130,7 @@ public class MusicService extends MediaBrowserServiceCompat {
             } else if (ACTION_PREV.equals(action)) {
                 MusicPlayerManager.getInstance().playPrevious(this);
             } else if (ACTION_UPDATE.equals(action)) {
-                Song song = (Song) intent.getSerializableExtra(EXTRA_SONG);
+                Song song = IntentCompat.getSerializableExtra(intent, EXTRA_SONG, Song.class);
                 boolean isPlaying = intent.getBooleanExtra(EXTRA_IS_PLAYING, false);
                 if (song != null) {
                     updateMediaSession(song, isPlaying);
@@ -136,7 +144,6 @@ public class MusicService extends MediaBrowserServiceCompat {
     private void updateMediaSession(Song song, boolean isPlaying) {
         if (mediaSession == null) return;
 
-        // Metadata
         MediaMetadataCompat.Builder metaBuilder = new MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, String.valueOf(song.getId()))
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, song.getTitle())
@@ -151,7 +158,6 @@ public class MusicService extends MediaBrowserServiceCompat {
         }
         mediaSession.setMetadata(metaBuilder.build());
 
-        // PlaybackState
         long actions = PlaybackStateCompat.ACTION_PLAY |
                 PlaybackStateCompat.ACTION_PAUSE |
                 PlaybackStateCompat.ACTION_PLAY_PAUSE |
@@ -171,30 +177,23 @@ public class MusicService extends MediaBrowserServiceCompat {
     }
 
     private void showNotification(Song song, boolean isPlaying) {
+        int pendingFlag = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            pendingFlag |= PendingIntent.FLAG_IMMUTABLE;
+        }
+
         Intent openAppIntent = new Intent(this, MainActivity.class);
         openAppIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent contentPendingIntent = PendingIntent.getActivity(
-                this, 0, openAppIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
-        );
+        PendingIntent contentPendingIntent = PendingIntent.getActivity(this, 0, openAppIntent, pendingFlag);
 
         Intent prevIntent = new Intent(this, MusicService.class).setAction(ACTION_PREV);
-        PendingIntent prevPendingIntent = PendingIntent.getService(
-                this, 1, prevIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
-        );
+        PendingIntent prevPendingIntent = PendingIntent.getService(this, 1, prevIntent, pendingFlag);
 
         Intent toggleIntent = new Intent(this, MusicService.class).setAction(ACTION_TOGGLE);
-        PendingIntent togglePendingIntent = PendingIntent.getService(
-                this, 2, toggleIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
-        );
+        PendingIntent togglePendingIntent = PendingIntent.getService(this, 2, toggleIntent, pendingFlag);
 
         Intent nextIntent = new Intent(this, MusicService.class).setAction(ACTION_NEXT);
-        PendingIntent nextPendingIntent = PendingIntent.getService(
-                this, 3, nextIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
-        );
+        PendingIntent nextPendingIntent = PendingIntent.getService(this, 3, nextIntent, pendingFlag);
 
         int playPauseIcon = isPlaying ? R.drawable.ic_pause : R.drawable.ic_play;
         String playPauseTitle = isPlaying ? "Tạm dừng" : "Phát";
@@ -248,7 +247,6 @@ public class MusicService extends MediaBrowserServiceCompat {
     @Nullable
     @Override
     public BrowserRoot onGetRoot(@NonNull String clientPackageName, int clientUid, @Nullable Bundle rootHints) {
-        // Return root node for Android Auto and media browser clients
         return new BrowserRoot(MEDIA_ROOT_ID, null);
     }
 

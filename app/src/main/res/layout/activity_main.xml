@@ -22,8 +22,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
-            android:layout_toStartOf="@+id/layoutTabs"
-            android:layout_marginEnd="12dp"
+            android:layout_toStartOf="@+id/layoutTopActions"
+            android:layout_marginEnd="8dp"
             android:orientation="vertical">
 
             <LinearLayout
@@ -65,39 +65,59 @@
                 android:ellipsize="end" />
         </LinearLayout>
 
-        <!-- Top Tab Switcher: Trình phát / Thư viện -->
+        <!-- Top Actions: Wi-Fi Sync + Tab Switcher -->
         <LinearLayout
-            android:id="@+id/layoutTabs"
+            android:id="@+id/layoutTopActions"
             android:layout_width="wrap_content"
-            android:layout_height="36dp"
+            android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:background="@drawable/bg_pill_search"
-            android:padding="2dp">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/btnTabPlayer"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_tab_active"
-                android:gravity="center"
-                android:paddingHorizontal="14dp"
-                android:text="Trình phát"
-                android:textColor="@color/white"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+            <ImageView
+                android:id="@+id/btnOpenSync"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_pill_search"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="8dp"
+                android:src="@drawable/ic_wifi_sync"
+                android:tint="@color/accent_gold" />
 
-            <TextView
-                android:id="@+id/btnTabLibrary"
+            <LinearLayout
+                android:id="@+id/layoutTabs"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_tab_inactive"
-                android:gravity="center"
-                android:paddingHorizontal="14dp"
-                android:text="Thư viện"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:layout_height="36dp"
+                android:background="@drawable/bg_pill_search"
+                android:padding="2dp">
+
+                <TextView
+                    android:id="@+id/btnTabPlayer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_tab_active"
+                    android:gravity="center"
+                    android:paddingHorizontal="12dp"
+                    android:text="Trình phát"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/btnTabLibrary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_tab_inactive"
+                    android:gravity="center"
+                    android:paddingHorizontal="12dp"
+                    android:text="Thư viện"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
     </RelativeLayout>
 

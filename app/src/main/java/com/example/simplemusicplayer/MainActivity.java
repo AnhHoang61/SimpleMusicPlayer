@@ -2,29 +2,26 @@ package com.example.simplemusicplayer;
 
 import android.Manifest;
 import android.animation.ObjectAnimator;
-import android.content.ContentResolver;
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.net.Uri;
+import android.media.AudioDeviceCallback;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.MediaStore;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.content.Context;
-import android.content.Intent;
-import android.media.AudioDeviceCallback;
-import android.media.AudioDeviceInfo;
-import android.media.AudioManager;
-import android.provider.Settings;
-import android.view.LayoutInflater;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -32,23 +29,35 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.simplemusicplayer.adapter.MusicAdapter;
+import com.example.simplemusicplayer.model.Song;
+import com.example.simplemusicplayer.player.MusicPlayerManager;
+import com.example.simplemusicplayer.sync.SyncManager;
+import com.example.simplemusicplayer.util.AudioDeviceHelper;
+import com.example.simplemusicplayer.util.MusicLoader;
+import com.example.simplemusicplayer.util.TimeUtils;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
+/**
+ * Main activity of V-Music ("Bushi no Hibiki" Samurai Edition).
+ * Handles user interface navigation, full player controls, song library, and audio output routing.
+ */
 public class MainActivity extends AppCompatActivity implements MusicPlayerManager.PlaybackListener {
 
-    // Tab buttons & containers
+    // Tab buttons & layout containers
+    private ImageView btnOpenSync;
     private TextView btnTabPlayer, btnTabLibrary;
     private ScrollView layoutPlayerView;
     private LinearLayout layoutLibraryView;
@@ -85,7 +94,6 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
     private TextView tvMiniTitle, tvMiniArtist;
     private ImageView btnMiniPlayPause, btnMiniNext;
 
-    private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private MusicPlayerManager playerManager;
 
@@ -118,11 +126,17 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         setupTabs();
         setupPlayerControls();
         setupRecyclerView();
-        setupListeners();
+        setupSearchAndActions();
+        setupSyncFeature();
         checkPermissionsAndLoadSongs();
     }
 
+    // ==========================================
+    // View Initialization
+    // ==========================================
+
     private void initViews() {
+        btnOpenSync = findViewById(R.id.btnOpenSync);
         btnTabPlayer = findViewById(R.id.btnTabPlayer);
         btnTabLibrary = findViewById(R.id.btnTabLibrary);
         layoutPlayerView = findViewById(R.id.layoutPlayerView);
@@ -163,12 +177,16 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         btnMiniPlayPause = findViewById(R.id.btnMiniPlayPause);
         btnMiniNext = findViewById(R.id.btnMiniNext);
 
-        // Disc rotation animator
+        // Disc rotation animation
         discAnimator = ObjectAnimator.ofFloat(viewVinylDisc, "rotation", 0f, 360f);
         discAnimator.setDuration(12000);
         discAnimator.setRepeatCount(ObjectAnimator.INFINITE);
         discAnimator.setInterpolator(new LinearInterpolator());
     }
+
+    // ==========================================
+    // Tab Navigation
+    // ==========================================
 
     private void setupTabs() {
         btnTabPlayer.setOnClickListener(v -> switchTab(true));
@@ -193,6 +211,10 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         }
     }
 
+    // ==========================================
+    // Player Controls & SeekBar
+    // ==========================================
+
     private void setupPlayerControls() {
         btnPlayPauseLarge.setOnClickListener(v -> playerManager.togglePlayPause(MainActivity.this));
         btnPrevious.setOnClickListener(v -> playerManager.playPrevious(MainActivity.this));
@@ -215,7 +237,7 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
-                    tvCurrentTime.setText(formatTime(progress));
+                    tvCurrentTime.setText(TimeUtils.formatDuration(progress));
                 }
             }
 
@@ -232,17 +254,22 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         });
     }
 
+    // ==========================================
+    // Song Library & Search
+    // ==========================================
+
     private void setupRecyclerView() {
         musicAdapter = new MusicAdapter(this, songList, (song, originalIndex) -> {
             playerManager.setPlaylist(songList);
             playerManager.playSongAtIndex(MainActivity.this, originalIndex);
-            switchTab(true); // Jump to full player
+            switchTab(true);
         });
         rvSongs.setLayoutManager(new LinearLayoutManager(this));
         rvSongs.setAdapter(musicAdapter);
     }
 
-    private void setupListeners() {
+    private void setupSearchAndActions() {
+        btnOpenSync.setOnClickListener(v -> showWifiSyncDialog());
         btnRefresh.setOnClickListener(v -> checkPermissionsAndLoadSongs());
         btnGrantPermission.setOnClickListener(v -> checkPermissionsAndLoadSongs());
 
@@ -265,6 +292,10 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         btnMiniPlayPause.setOnClickListener(v -> playerManager.togglePlayPause(MainActivity.this));
         btnMiniNext.setOnClickListener(v -> playerManager.playNext(MainActivity.this));
     }
+
+    // ==========================================
+    // Permissions & MediaStore Loading
+    // ==========================================
 
     private void checkPermissionsAndLoadSongs() {
         List<String> permissions = new ArrayList<>();
@@ -298,98 +329,24 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         layoutEmptyState.setVisibility(View.GONE);
         rvSongs.setVisibility(View.VISIBLE);
 
-        backgroundExecutor.execute(() -> {
-            List<Song> fetchedSongs = new ArrayList<>();
-            ContentResolver contentResolver = getContentResolver();
-            Uri songUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        MusicLoader.loadSongsAsync(this, fetchedSongs -> {
+            songList.clear();
+            songList.addAll(fetchedSongs);
+            musicAdapter.updateData(songList);
+            playerManager.setPlaylist(songList);
 
-            String[] projection = {
-                    MediaStore.Audio.Media._ID,
-                    MediaStore.Audio.Media.TITLE,
-                    MediaStore.Audio.Media.ARTIST,
-                    MediaStore.Audio.Media.DURATION,
-                    MediaStore.Audio.Media.DATA,
-                    MediaStore.Audio.Media.ALBUM_ID,
-                    MediaStore.Audio.Media.DISPLAY_NAME
-            };
+            tvSongCount.setText(String.format(Locale.getDefault(), "%d khúc nhạc", songList.size()));
 
-            String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0 AND "
-                    + MediaStore.Audio.Media.DURATION + " >= 5000";
-            String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
+            if (songList.isEmpty()) {
+                showNoSongsView();
+            } else {
+                layoutEmptyState.setVisibility(View.GONE);
+                rvSongs.setVisibility(View.VISIBLE);
 
-            Cursor cursor = null;
-            try {
-                cursor = contentResolver.query(songUri, projection, selection, null, sortOrder);
-                if (cursor != null && cursor.moveToFirst()) {
-                    int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
-                    int titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
-                    int artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST);
-                    int durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION);
-                    int dataCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
-                    int albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID);
-                    int displayNameCol = cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME);
-
-                    do {
-                        long id = cursor.getLong(idCol);
-                        String title = cursor.getString(titleCol);
-                        String artist = cursor.getString(artistCol);
-                        long duration = cursor.getLong(durationCol);
-                        String path = cursor.getString(dataCol);
-                        long albumId = cursor.getLong(albumCol);
-                        String displayName = displayNameCol != -1 ? cursor.getString(displayNameCol) : null;
-
-                        // Tối ưu tên hiển thị: Nếu title dạng mã WhatsApp (AUD-..., PTT-...) hoặc rỗng thì lấy theo tên file
-                        if (title == null || title.trim().isEmpty() || title.startsWith("AUD-") || title.startsWith("PTT-") || "<unknown>".equalsIgnoreCase(title)) {
-                            if (displayName != null && !displayName.trim().isEmpty()) {
-                                String cleanName = displayName.replaceFirst("[.][^.]+$", "");
-                                if (!cleanName.trim().isEmpty()) {
-                                    title = cleanName;
-                                }
-                            }
-                        }
-
-                        // Đổi tên bài hát 59 phút / file Thủy Chung thành đúng "Thủy Chung" theo yêu cầu người dùng
-                        if ((displayName != null && displayName.contains("Thủy Chung"))
-                                || (duration >= 3500000 && duration <= 3650000)
-                                || (title != null && title.contains("AUD-20261110-WA0000"))) {
-                            title = "Thủy Chung";
-                        }
-
-                        fetchedSongs.add(new Song(id, title, artist, duration, path, albumId));
-                    } while (cursor.moveToNext());
+                if (playerManager.getCurrentSong() == null && !songList.isEmpty()) {
+                    updatePlayerMetadata(songList.get(0));
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (cursor != null) cursor.close();
             }
-
-            // Sắp xếp danh sách theo tên bài hát hiển thị (hỗ trợ tiếng Việt)
-            try {
-                java.text.Collator collator = java.text.Collator.getInstance(new Locale("vi", "VN"));
-                collator.setStrength(java.text.Collator.PRIMARY);
-                fetchedSongs.sort((s1, s2) -> collator.compare(s1.getTitle(), s2.getTitle()));
-            } catch (Exception ignored) {}
-
-            mainHandler.post(() -> {
-                songList.clear();
-                songList.addAll(fetchedSongs);
-                musicAdapter.updateData(songList);
-                playerManager.setPlaylist(songList);
-
-                tvSongCount.setText(String.format(Locale.getDefault(), "%d khúc nhạc", songList.size()));
-
-                if (songList.isEmpty()) {
-                    showNoSongsView();
-                } else {
-                    layoutEmptyState.setVisibility(View.GONE);
-                    rvSongs.setVisibility(View.VISIBLE);
-
-                    if (playerManager.getCurrentSong() == null && !songList.isEmpty()) {
-                        updatePlayerMetadata(songList.get(0));
-                    }
-                }
-            });
         });
     }
 
@@ -409,33 +366,188 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         btnGrantPermission.setVisibility(View.GONE);
     }
 
-    private void updateShuffleButton(boolean active) {
-        if (btnShuffle != null) {
-            int color = active ? ContextCompat.getColor(this, R.color.primary_accent)
-                    : ContextCompat.getColor(this, R.color.text_muted);
-            btnShuffle.setColorFilter(color);
+    // ==========================================
+    // Wi-Fi Auto-Sync Feature
+    // ==========================================
+
+    private void setupSyncFeature() {
+        SyncManager.getInstance().setupAutoSyncOnWifi(this);
+        SyncManager.getInstance().addListener(new SyncManager.SyncListener() {
+            @Override
+            public void onSyncStatusChanged(SyncManager.SyncStatus status, @Nullable String message) {}
+
+            @Override
+            public void onSyncProgress(int current, int total, String songName) {}
+
+            @Override
+            public void onSyncCompleted(int syncedCount) {
+                if (syncedCount > 0) {
+                    mainHandler.post(() -> {
+                        Toast.makeText(MainActivity.this, "Đã đồng bộ thành công " + syncedCount + " bài hát mới!", Toast.LENGTH_LONG).show();
+                        loadSongs();
+                    });
+                }
+            }
+        });
+    }
+
+    private void showWifiSyncDialog() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this, R.style.BottomSheetDialogTheme);
+        View view = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_wifi_sync, null);
+        dialog.setContentView(view);
+
+        TextView tvTitle = view.findViewById(R.id.tvSyncStatusTitle);
+        TextView tvSubtitle = view.findViewById(R.id.tvSyncStatusSubtitle);
+        LinearLayout layoutProgress = view.findViewById(R.id.layoutSyncProgress);
+        ProgressBar pbSync = view.findViewById(R.id.pbSync);
+        TextView tvProgressDetail = view.findViewById(R.id.tvSyncProgressDetail);
+        androidx.appcompat.widget.SwitchCompat switchAuto = view.findViewById(R.id.switchAutoSync);
+        MaterialButton btnTrigger = view.findViewById(R.id.btnTriggerSync);
+
+        tvTitle.setText(SyncManager.getInstance().getCurrentStatusMessage());
+        tvSubtitle.setText(SyncManager.getInstance().getLastSyncSummary(this));
+        switchAuto.setChecked(SyncManager.getInstance().isAutoSyncEnabled(this));
+        switchAuto.setOnCheckedChangeListener((btn, isChecked) -> {
+            SyncManager.getInstance().setAutoSyncEnabled(this, isChecked);
+        });
+
+        view.findViewById(R.id.btnSyncClose).setOnClickListener(v -> dialog.dismiss());
+
+        SyncManager.SyncListener dialogListener = new SyncManager.SyncListener() {
+            @Override
+            public void onSyncStatusChanged(SyncManager.SyncStatus status, @Nullable String message) {
+                tvTitle.setText(message != null ? message : "");
+                if (status == SyncManager.SyncStatus.DOWNLOADING) {
+                    layoutProgress.setVisibility(View.VISIBLE);
+                    btnTrigger.setEnabled(false);
+                } else if (status == SyncManager.SyncStatus.COMPLETED || status == SyncManager.SyncStatus.ERROR) {
+                    layoutProgress.setVisibility(View.GONE);
+                    btnTrigger.setEnabled(true);
+                    tvSubtitle.setText(SyncManager.getInstance().getLastSyncSummary(MainActivity.this));
+                }
+            }
+
+            @Override
+            public void onSyncProgress(int current, int total, String songName) {
+                layoutProgress.setVisibility(View.VISIBLE);
+                btnTrigger.setEnabled(false);
+                pbSync.setMax(total);
+                pbSync.setProgress(current);
+                tvProgressDetail.setText(String.format(Locale.getDefault(), "Đang tải (%d/%d): %s", current, total, songName));
+            }
+
+            @Override
+            public void onSyncCompleted(int syncedCount) {
+                layoutProgress.setVisibility(View.GONE);
+                btnTrigger.setEnabled(true);
+                tvSubtitle.setText(SyncManager.getInstance().getLastSyncSummary(MainActivity.this));
+            }
+        };
+
+        SyncManager.getInstance().addListener(dialogListener);
+        dialog.setOnDismissListener(d -> SyncManager.getInstance().removeListener(dialogListener));
+
+        btnTrigger.setOnClickListener(v -> {
+            SyncManager.getInstance().startSync(this, false);
+        });
+
+        dialog.show();
+    }
+
+    // ==========================================
+    // Audio Output Switcher & Dialog
+    // ==========================================
+
+    private void showAudioOutputDialog() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this, R.style.BottomSheetDialogTheme);
+        View view = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_audio_output, null);
+        dialog.setContentView(view);
+
+        view.findViewById(R.id.btnAudioClose).setOnClickListener(v -> dialog.dismiss());
+
+        view.findViewById(R.id.btnOpenBluetooth).setOnClickListener(v -> {
+            try {
+                Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
+                startActivity(intent);
+            } catch (Exception e) {
+                Toast.makeText(this, "Không thể mở cài đặt Bluetooth", Toast.LENGTH_SHORT).show();
+            }
+            dialog.dismiss();
+        });
+
+        LinearLayout layoutDeviceList = view.findViewById(R.id.layoutDeviceList);
+        layoutDeviceList.removeAllViews();
+
+        List<AudioDeviceInfo> availableDevices = AudioDeviceHelper.getAvailableAudioDevices(this);
+        AudioDeviceInfo selected = playerManager.getSelectedAudioDevice();
+
+        // 1. "System Default / Auto" option
+        View defaultItem = LayoutInflater.from(this).inflate(R.layout.item_audio_device, layoutDeviceList, false);
+        ((ImageView) defaultItem.findViewById(R.id.ivDeviceIcon)).setImageResource(R.drawable.ic_audio_output);
+        ((TextView) defaultItem.findViewById(R.id.tvDeviceTitle)).setText("Tự động theo hệ thống");
+        ((TextView) defaultItem.findViewById(R.id.tvDeviceSubtitle)).setText("Theo kết nối tai nghe / loa hiện hành");
+        ImageView defCheck = defaultItem.findViewById(R.id.ivCheckmark);
+        defCheck.setVisibility(selected == null ? View.VISIBLE : View.GONE);
+        defaultItem.setOnClickListener(v -> {
+            playerManager.setAudioOutputDevice(null);
+            updateCurrentAudioOutput();
+            Toast.makeText(this, "Đã chọn: Tự động theo hệ thống", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
+        });
+        layoutDeviceList.addView(defaultItem);
+
+        // 2. Hardware devices list
+        for (AudioDeviceInfo dev : availableDevices) {
+            View item = LayoutInflater.from(this).inflate(R.layout.item_audio_device, layoutDeviceList, false);
+            ImageView ivIcon = item.findViewById(R.id.ivDeviceIcon);
+            TextView tvTitle = item.findViewById(R.id.tvDeviceTitle);
+            TextView tvSub = item.findViewById(R.id.tvDeviceSubtitle);
+            ImageView ivCheck = item.findViewById(R.id.ivCheckmark);
+
+            ivIcon.setImageResource(AudioDeviceHelper.getDeviceIcon(dev));
+            tvTitle.setText(AudioDeviceHelper.getDeviceTypeName(dev));
+            tvSub.setText(AudioDeviceHelper.getDeviceDescription(dev));
+
+            boolean isCurrent = (selected != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && selected.getId() == dev.getId());
+            ivCheck.setVisibility(isCurrent ? View.VISIBLE : View.GONE);
+
+            item.setOnClickListener(v -> {
+                playerManager.setAudioOutputDevice(dev);
+                updateCurrentAudioOutput();
+                Toast.makeText(this, "Đã chuyển đầu ra: " + AudioDeviceHelper.getDeviceTypeName(dev), Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            });
+
+            layoutDeviceList.addView(item);
+        }
+
+        dialog.show();
+    }
+
+    private void updateCurrentAudioOutput() {
+        if (tvOutputDeviceName == null || ivOutputIcon == null) return;
+        AudioDeviceInfo selected = playerManager.getSelectedAudioDevice();
+        if (selected != null) {
+            tvOutputDeviceName.setText(AudioDeviceHelper.getDeviceTypeName(selected));
+            ivOutputIcon.setImageResource(AudioDeviceHelper.getDeviceIcon(selected));
+        } else {
+            List<AudioDeviceInfo> list = AudioDeviceHelper.getAvailableAudioDevices(this);
+            AudioDeviceInfo active = AudioDeviceHelper.getActiveConnectedDevice(this, list);
+            if (active != null) {
+                tvOutputDeviceName.setText(AudioDeviceHelper.getDeviceTypeName(active));
+                ivOutputIcon.setImageResource(AudioDeviceHelper.getDeviceIcon(active));
+            } else {
+                tvOutputDeviceName.setText("Loa ngoài điện thoại");
+                ivOutputIcon.setImageResource(R.drawable.ic_speaker);
+            }
         }
     }
 
-    private void updateRepeatButton(MusicPlayerManager.RepeatMode mode) {
-        if (btnRepeat == null) return;
-        switch (mode) {
-            case OFF:
-                btnRepeat.setImageResource(R.drawable.ic_repeat);
-                btnRepeat.setColorFilter(ContextCompat.getColor(this, R.color.text_muted));
-                break;
-            case ALL:
-                btnRepeat.setImageResource(R.drawable.ic_repeat);
-                btnRepeat.setColorFilter(ContextCompat.getColor(this, R.color.primary_accent));
-                break;
-            case ONE:
-                btnRepeat.setImageResource(R.drawable.ic_repeat_one);
-                btnRepeat.setColorFilter(ContextCompat.getColor(this, R.color.accent_gold));
-                break;
-        }
-    }
+    // ==========================================
+    // UI Player Metadata & Button Sync
+    // ==========================================
 
-    private void updatePlayerMetadata(Song song) {
+    private void updatePlayerMetadata(@Nullable Song song) {
         if (song == null) return;
         tvSheetTitle.setText(song.getTitle());
         tvSheetArtist.setText(String.format("⚔️ %s", song.getArtist()));
@@ -466,8 +578,38 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         }
     }
 
+    private void updateShuffleButton(boolean active) {
+        if (btnShuffle != null) {
+            int color = active ? ContextCompat.getColor(this, R.color.primary_accent)
+                    : ContextCompat.getColor(this, R.color.text_muted);
+            btnShuffle.setColorFilter(color);
+        }
+    }
+
+    private void updateRepeatButton(MusicPlayerManager.RepeatMode mode) {
+        if (btnRepeat == null) return;
+        switch (mode) {
+            case OFF:
+                btnRepeat.setImageResource(R.drawable.ic_repeat);
+                btnRepeat.setColorFilter(ContextCompat.getColor(this, R.color.text_muted));
+                break;
+            case ALL:
+                btnRepeat.setImageResource(R.drawable.ic_repeat);
+                btnRepeat.setColorFilter(ContextCompat.getColor(this, R.color.primary_accent));
+                break;
+            case ONE:
+                btnRepeat.setImageResource(R.drawable.ic_repeat_one);
+                btnRepeat.setColorFilter(ContextCompat.getColor(this, R.color.accent_gold));
+                break;
+        }
+    }
+
+    // ==========================================
+    // PlaybackListener Callbacks
+    // ==========================================
+
     @Override
-    public void onSongChanged(Song song) {
+    public void onSongChanged(@Nullable Song song) {
         if (song == null) return;
         updatePlayerMetadata(song);
         miniPlayerLayout.setVisibility(View.VISIBLE);
@@ -484,120 +626,14 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         if (!isUserSeeking && seekBarPlayer != null) {
             seekBarPlayer.setMax(duration);
             seekBarPlayer.setProgress(currentPosition);
-            tvCurrentTime.setText(formatTime(currentPosition));
-            tvTotalTime.setText(formatTime(duration));
+            tvCurrentTime.setText(TimeUtils.formatDuration(currentPosition));
+            tvTotalTime.setText(TimeUtils.formatDuration(duration));
         }
     }
 
-    private static String formatTime(int millis) {
-        long totalSecs = millis / 1000;
-        long minutes = totalSecs / 60;
-        long seconds = totalSecs % 60;
-        return String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
-    }
-
-    private void showAudioOutputDialog() {
-        BottomSheetDialog dialog = new BottomSheetDialog(this, R.style.BottomSheetDialogTheme);
-        View view = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_audio_output, null);
-        dialog.setContentView(view);
-
-        view.findViewById(R.id.btnAudioClose).setOnClickListener(v -> dialog.dismiss());
-
-        view.findViewById(R.id.btnOpenBluetooth).setOnClickListener(v -> {
-            try {
-                Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
-                startActivity(intent);
-            } catch (Exception e) {
-                Toast.makeText(this, "Không thể mở cài đặt Bluetooth", Toast.LENGTH_SHORT).show();
-            }
-            dialog.dismiss();
-        });
-
-        LinearLayout layoutDeviceList = view.findViewById(R.id.layoutDeviceList);
-        layoutDeviceList.removeAllViews();
-
-        List<AudioDeviceInfo> availableDevices = playerManager.getAvailableAudioDevices(this);
-        AudioDeviceInfo selected = playerManager.getSelectedAudioDevice();
-
-        // 1. Add "System Default / Auto" option
-        View defaultItem = LayoutInflater.from(this).inflate(R.layout.item_audio_device, layoutDeviceList, false);
-        ((ImageView) defaultItem.findViewById(R.id.ivDeviceIcon)).setImageResource(R.drawable.ic_audio_output);
-        ((TextView) defaultItem.findViewById(R.id.tvDeviceTitle)).setText("Tự động theo hệ thống");
-        ((TextView) defaultItem.findViewById(R.id.tvDeviceSubtitle)).setText("Theo kết nối tai nghe / loa hiện hành");
-        ImageView defCheck = defaultItem.findViewById(R.id.ivCheckmark);
-        defCheck.setVisibility(selected == null ? View.VISIBLE : View.GONE);
-        defaultItem.setOnClickListener(v -> {
-            playerManager.setAudioOutputDevice(null);
-            updateCurrentAudioOutput();
-            Toast.makeText(this, "Đã chọn: Tự động theo hệ thống", Toast.LENGTH_SHORT).show();
-            dialog.dismiss();
-        });
-        layoutDeviceList.addView(defaultItem);
-
-        // 2. Add each hardware device (Loa máy, Bluetooth, Tai nghe...)
-        for (AudioDeviceInfo dev : availableDevices) {
-            View item = LayoutInflater.from(this).inflate(R.layout.item_audio_device, layoutDeviceList, false);
-            ImageView ivIcon = item.findViewById(R.id.ivDeviceIcon);
-            TextView tvTitle = item.findViewById(R.id.tvDeviceTitle);
-            TextView tvSub = item.findViewById(R.id.tvDeviceSubtitle);
-            ImageView ivCheck = item.findViewById(R.id.ivCheckmark);
-
-            ivIcon.setImageResource(MusicPlayerManager.getDeviceIcon(dev));
-            tvTitle.setText(MusicPlayerManager.getDeviceTypeName(dev));
-
-            String typeStr = "Đang kết nối";
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (dev.getType() == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER) typeStr = "Loa tích hợp sẵn";
-                else if (dev.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) typeStr = "Tai nghe/Loa Bluetooth không dây";
-                else if (dev.getType() == AudioDeviceInfo.TYPE_WIRED_HEADSET) typeStr = "Cổng cắm tai nghe 3.5mm";
-                else if (dev.getType() == AudioDeviceInfo.TYPE_USB_HEADSET) typeStr = "Cổng USB-C / DAC âm thanh";
-            }
-            tvSub.setText(typeStr);
-
-            boolean isCurrent = (selected != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && selected.getId() == dev.getId());
-            ivCheck.setVisibility(isCurrent ? View.VISIBLE : View.GONE);
-
-            item.setOnClickListener(v -> {
-                boolean success = playerManager.setAudioOutputDevice(dev);
-                updateCurrentAudioOutput();
-                Toast.makeText(this, "Đã chuyển đầu ra: " + MusicPlayerManager.getDeviceTypeName(dev), Toast.LENGTH_SHORT).show();
-                dialog.dismiss();
-            });
-
-            layoutDeviceList.addView(item);
-        }
-
-        dialog.show();
-    }
-
-    private void updateCurrentAudioOutput() {
-        if (tvOutputDeviceName == null || ivOutputIcon == null) return;
-        AudioDeviceInfo selected = playerManager.getSelectedAudioDevice();
-        if (selected != null) {
-            tvOutputDeviceName.setText(MusicPlayerManager.getDeviceTypeName(selected));
-            ivOutputIcon.setImageResource(MusicPlayerManager.getDeviceIcon(selected));
-        } else {
-            List<AudioDeviceInfo> list = playerManager.getAvailableAudioDevices(this);
-            AudioDeviceInfo active = null;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                for (AudioDeviceInfo d : list) {
-                    if (d.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
-                        d.getType() == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
-                        d.getType() == AudioDeviceInfo.TYPE_WIRED_HEADPHONES) {
-                        active = d;
-                        break;
-                    }
-                }
-            }
-            if (active != null) {
-                tvOutputDeviceName.setText(MusicPlayerManager.getDeviceTypeName(active));
-                ivOutputIcon.setImageResource(MusicPlayerManager.getDeviceIcon(active));
-            } else {
-                tvOutputDeviceName.setText("Loa ngoài điện thoại");
-                ivOutputIcon.setImageResource(R.drawable.ic_speaker);
-            }
-        }
-    }
+    // ==========================================
+    // Activity Lifecycle
+    // ==========================================
 
     @Override
     protected void onStart() {
@@ -625,6 +661,14 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (SyncManager.getInstance().isAutoSyncEnabled(this)) {
+            SyncManager.getInstance().startSync(this, true);
+        }
+    }
+
+    @Override
     protected void onStop() {
         super.onStop();
         playerManager.removeListener(this);
@@ -643,6 +687,5 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         if (discAnimator != null) {
             discAnimator.cancel();
         }
-        backgroundExecutor.shutdown();
     }
 }

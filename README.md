@@ -24,24 +24,32 @@
 
 ---
 
-## 📸 Cấu Trúc Dự Án
+## 📸 Cấu Trúc Dự Án (Clean Architecture)
 
 ```text
-SimpleMusicPlayer/
+V-Music/
 ├── app/
 │   ├── build.gradle
 │   └── src/main/
 │       ├── AndroidManifest.xml
 │       ├── java/com/example/simplemusicplayer/
-│       │   ├── MainActivity.java           # Quản lý giao diện, cấp quyền, tìm kiếm
-│       │   ├── MusicPlayerManager.java     # Singleton điều khiển MediaPlayer & playlist
-│       │   ├── MusicService.java           # Foreground Service phát nhạc ngầm & Notification
-│       │   ├── MusicAdapter.java           # Danh sách bài hát & bộ lọc Filterable
-│       │   └── Song.java                   # Model dữ liệu bài hát
+│       │   ├── MainActivity.java               # Điều phối giao diện người dùng, Tabs & Controls
+│       │   ├── adapter/
+│       │   │   └── MusicAdapter.java           # Adapter danh sách bài hát & bộ lọc tìm kiếm
+│       │   ├── model/
+│       │   │   └── Song.java                   # Entity mô hình dữ liệu bài hát
+│       │   ├── player/
+│       │   │   └── MusicPlayerManager.java     # Singleton điều khiển MediaPlayer & thứ tự phát
+│       │   ├── service/
+│       │   │   └── MusicService.java           # Foreground Service, Notification & Android Auto
+│       │   └── util/
+│       │       ├── AudioDeviceHelper.java      # Quản lý phát hiện & nhãn cổng âm thanh (Speaker/BT/USB)
+│       │       ├── MusicLoader.java            # Quét & nạp danh sách nhạc từ MediaStore bất đồng bộ
+│       │       └── TimeUtils.java              # Tiện ích định dạng thời gian chuẩn mm:ss / hh:mm:ss
 │       └── res/
-│           ├── layout/                     # Giao diện XML (activity_main, item_song, bottom_sheet_player)
-│           ├── drawable/                   # Vector icons & shapes
-│           └── values/                     # Colors, Strings, Themes
+│           ├── layout/                         # Giao diện XML (activity_main, item_song, bottom_sheet_audio_output)
+│           ├── drawable/                       # Vector kiếm Katana, đĩa Tsuba, Icons & Shapes
+│           └── values/                         # Colors, Strings, Themes
 ```
 
 ---

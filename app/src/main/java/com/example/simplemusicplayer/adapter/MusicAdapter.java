@@ -1,4 +1,4 @@
-package com.example.simplemusicplayer;
+package com.example.simplemusicplayer.adapter;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -14,10 +14,16 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.simplemusicplayer.R;
+import com.example.simplemusicplayer.model.Song;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * RecyclerView adapter for displaying the list of songs with live search filtering.
+ */
 public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.SongViewHolder> implements Filterable {
 
     public interface OnSongClickListener {
@@ -32,22 +38,26 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.SongViewHold
 
     public MusicAdapter(Context context, List<Song> songs, OnSongClickListener listener) {
         this.context = context;
-        this.fullSongList = new ArrayList<>(songs);
-        this.displayedSongList = new ArrayList<>(songs);
+        this.fullSongList = new ArrayList<>(songs != null ? songs : new ArrayList<>());
+        this.displayedSongList = new ArrayList<>(this.fullSongList);
         this.clickListener = listener;
     }
 
     public void updateData(List<Song> songs) {
         this.fullSongList.clear();
-        this.fullSongList.addAll(songs);
+        if (songs != null) {
+            this.fullSongList.addAll(songs);
+        }
         this.displayedSongList.clear();
-        this.displayedSongList.addAll(songs);
+        this.displayedSongList.addAll(this.fullSongList);
         notifyDataSetChanged();
     }
 
     public void setCurrentPlayingSongId(long songId) {
-        this.currentPlayingSongId = songId;
-        notifyDataSetChanged();
+        if (this.currentPlayingSongId != songId) {
+            this.currentPlayingSongId = songId;
+            notifyDataSetChanged();
+        }
     }
 
     @NonNull
@@ -124,8 +134,10 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.SongViewHold
     }
 
     static class SongViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitle, tvArtist, tvDuration;
-        ImageView ivIcon;
+        final TextView tvTitle;
+        final TextView tvArtist;
+        final TextView tvDuration;
+        final ImageView ivIcon;
 
         SongViewHolder(@NonNull View itemView) {
             super(itemView);

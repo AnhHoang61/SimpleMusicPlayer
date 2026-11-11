@@ -1,22 +1,35 @@
-package com.example.simplemusicplayer;
+package com.example.simplemusicplayer.player;
 
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.example.simplemusicplayer.model.Song;
+import com.example.simplemusicplayer.service.MusicService;
+import com.example.simplemusicplayer.util.AudioDeviceHelper;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, MediaPlayer.OnPreparedListener {
+/**
+ * Singleton controller managing MediaPlayer lifecycle, audio playback, playlist ordering,
+ * shuffle/repeat modes, and playback listeners.
+ */
+public class MusicPlayerManager implements MediaPlayer.OnCompletionListener,
+        MediaPlayer.OnErrorListener, MediaPlayer.OnPreparedListener {
+
     private static final String TAG = "MusicPlayerManager";
 
     public enum RepeatMode {
@@ -24,16 +37,17 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
     }
 
     public interface PlaybackListener {
-        void onSongChanged(Song song);
+        void onSongChanged(@Nullable Song song);
         void onPlaybackStatusChanged(boolean isPlaying);
         void onProgressChanged(int currentPosition, int duration);
     }
 
-    private static MusicPlayerManager instance;
+    private static volatile MusicPlayerManager instance;
 
     private Context appContext;
     private MediaPlayer mediaPlayer;
     private AudioDeviceInfo selectedAudioDevice = null;
+
     private final List<Song> playlist = new ArrayList<>();
     private final List<Integer> playOrder = new ArrayList<>();
     private int currentOrderIndex = -1;
@@ -41,7 +55,7 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
     private boolean isShuffle = false;
     private RepeatMode repeatMode = RepeatMode.ALL;
 
-    private final List<PlaybackListener> listeners = new ArrayList<>();
+    private final List<PlaybackListener> listeners = new CopyOnWriteArrayList<>();
     private final Handler progressHandler = new Handler(Looper.getMainLooper());
     private final Runnable progressRunnable = new Runnable() {
         @Override
@@ -64,7 +78,11 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
         return instance;
     }
 
-    public void addListener(PlaybackListener listener) {
+    // ==========================================
+    // Listener Management
+    // ==========================================
+
+    public void addListener(@NonNull PlaybackListener listener) {
         if (!listeners.contains(listener)) {
             listeners.add(listener);
             Song currentSong = getCurrentSong();
@@ -78,11 +96,15 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
         }
     }
 
-    public void removeListener(PlaybackListener listener) {
+    public void removeListener(@NonNull PlaybackListener listener) {
         listeners.remove(listener);
     }
 
-    public void setPlaylist(List<Song> songs) {
+    // ==========================================
+    // Playlist & Order Management
+    // ==========================================
+
+    public void setPlaylist(@Nullable List<Song> songs) {
         playlist.clear();
         if (songs != null) {
             playlist.addAll(songs);
@@ -104,6 +126,10 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
         return new ArrayList<>(playlist);
     }
 
+    // ==========================================
+    // Playback Control Actions
+    // ==========================================
+
     public void playSongById(Context context, long id) {
         for (int i = 0; i < playlist.size(); i++) {
             if (playlist.get(i).getId() == id) {
@@ -116,7 +142,6 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
     public void playSongAtIndex(Context context, int index) {
         if (index < 0 || index >= playlist.size()) return;
 
-        // Find position in playOrder
         for (int i = 0; i < playOrder.size(); i++) {
             if (playOrder.get(i) == index) {
                 currentOrderIndex = i;
@@ -137,19 +162,14 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
 
         Song song = playlist.get(songIndex);
         try {
-            if (mediaPlayer != null) {
-                mediaPlayer.stop();
-                mediaPlayer.reset();
-                mediaPlayer.release();
-                mediaPlayer = null;
-            }
+            releaseMediaPlayer();
 
             mediaPlayer = new MediaPlayer();
             mediaPlayer.setAudioAttributes(
-                new AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .build()
+                    new AudioAttributes.Builder()
+                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                            .setUsage(AudioAttributes.USAGE_MEDIA)
+                            .build()
             );
 
             mediaPlayer.setDataSource(context, song.getUri());
@@ -159,23 +179,11 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
             mediaPlayer.prepareAsync();
 
             notifySongChanged(song);
-
-            // Notify Foreground Service
             MusicService.startOrUpdateService(context, song, true);
 
         } catch (IOException e) {
             Log.e(TAG, "Error playing song: " + song.getTitle(), e);
         }
-    }
-
-    @Override
-    public void onPrepared(MediaPlayer mp) {
-        if (selectedAudioDevice != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            mp.setPreferredDevice(selectedAudioDevice);
-        }
-        mp.start();
-        notifyStateChanged(true);
-        startProgressTracking();
     }
 
     public void togglePlayPause(Context context) {
@@ -276,6 +284,10 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
         return repeatMode;
     }
 
+    // ==========================================
+    // Status Getters
+    // ==========================================
+
     public boolean isPlaying() {
         return mediaPlayer != null && mediaPlayer.isPlaying();
     }
@@ -288,6 +300,7 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
         return repeatMode;
     }
 
+    @Nullable
     public Song getCurrentSong() {
         if (currentOrderIndex >= 0 && currentOrderIndex < playOrder.size()) {
             int songIdx = playOrder.get(currentOrderIndex);
@@ -304,6 +317,20 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
 
     public int getDuration() {
         return mediaPlayer != null ? mediaPlayer.getDuration() : 0;
+    }
+
+    // ==========================================
+    // MediaPlayer Callbacks
+    // ==========================================
+
+    @Override
+    public void onPrepared(MediaPlayer mp) {
+        if (selectedAudioDevice != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            mp.setPreferredDevice(selectedAudioDevice);
+        }
+        mp.start();
+        notifyStateChanged(true);
+        startProgressTracking();
     }
 
     @Override
@@ -331,11 +358,26 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
-        Log.e(TAG, "MediaPlayer error: " + what + ", " + extra);
+        Log.e(TAG, "MediaPlayer error: what=" + what + ", extra=" + extra);
         stopProgressTracking();
         notifyStateChanged(false);
         return true;
     }
+
+    private void releaseMediaPlayer() {
+        if (mediaPlayer != null) {
+            try {
+                mediaPlayer.stop();
+                mediaPlayer.reset();
+                mediaPlayer.release();
+            } catch (Exception ignored) {}
+            mediaPlayer = null;
+        }
+    }
+
+    // ==========================================
+    // Progress Tracking & Listeners Notification
+    // ==========================================
 
     private void startProgressTracking() {
         progressHandler.removeCallbacks(progressRunnable);
@@ -347,24 +389,28 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
     }
 
     private void notifySongChanged(Song song) {
-        for (PlaybackListener listener : new ArrayList<>(listeners)) {
+        for (PlaybackListener listener : listeners) {
             listener.onSongChanged(song);
         }
     }
 
     private void notifyStateChanged(boolean isPlaying) {
-        for (PlaybackListener listener : new ArrayList<>(listeners)) {
+        for (PlaybackListener listener : listeners) {
             listener.onPlaybackStatusChanged(isPlaying);
         }
     }
 
     private void notifyProgress(int cur, int total) {
-        for (PlaybackListener listener : new ArrayList<>(listeners)) {
+        for (PlaybackListener listener : listeners) {
             listener.onProgressChanged(cur, total);
         }
     }
 
-    public boolean setAudioOutputDevice(AudioDeviceInfo device) {
+    // ==========================================
+    // Audio Routing Device Management
+    // ==========================================
+
+    public boolean setAudioOutputDevice(@Nullable AudioDeviceInfo device) {
         this.selectedAudioDevice = device;
         if (mediaPlayer != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             return mediaPlayer.setPreferredDevice(device);
@@ -372,81 +418,20 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
         return false;
     }
 
+    @Nullable
     public AudioDeviceInfo getSelectedAudioDevice() {
         return selectedAudioDevice;
     }
 
     public List<AudioDeviceInfo> getAvailableAudioDevices(Context context) {
-        List<AudioDeviceInfo> list = new ArrayList<>();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null) {
-            AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-            if (am != null) {
-                AudioDeviceInfo[] devices = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
-                for (AudioDeviceInfo d : devices) {
-                    int type = d.getType();
-                    if (type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER ||
-                        type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
-                        type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
-                        type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
-                        type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
-                        type == AudioDeviceInfo.TYPE_USB_DEVICE ||
-                        type == AudioDeviceInfo.TYPE_USB_HEADSET ||
-                        type == AudioDeviceInfo.TYPE_LINE_ANALOG) {
-                        list.add(d);
-                    }
-                }
-            }
-        }
-        return list;
+        return AudioDeviceHelper.getAvailableAudioDevices(context);
     }
 
     public static String getDeviceTypeName(AudioDeviceInfo device) {
-        if (device == null) return "Mặc định (Loa máy)";
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            CharSequence name = device.getProductName();
-            if (name != null && name.length() > 0 && !name.toString().trim().equalsIgnoreCase("Speaker")) {
-                return name.toString();
-            }
-            switch (device.getType()) {
-                case AudioDeviceInfo.TYPE_BUILTIN_SPEAKER:
-                    return "Loa ngoài điện thoại";
-                case AudioDeviceInfo.TYPE_WIRED_HEADSET:
-                case AudioDeviceInfo.TYPE_WIRED_HEADPHONES:
-                    return "Tai nghe có dây";
-                case AudioDeviceInfo.TYPE_BLUETOOTH_A2DP:
-                case AudioDeviceInfo.TYPE_BLUETOOTH_SCO:
-                    return "Tai nghe / Loa Bluetooth";
-                case AudioDeviceInfo.TYPE_USB_DEVICE:
-                case AudioDeviceInfo.TYPE_USB_HEADSET:
-                    return "Thiết bị âm thanh USB-C";
-                case AudioDeviceInfo.TYPE_LINE_ANALOG:
-                    return "Cáp âm thanh AUX";
-                default:
-                    return "Thiết bị âm thanh ngoài";
-            }
-        }
-        return "Loa thiết bị";
+        return AudioDeviceHelper.getDeviceTypeName(device);
     }
 
     public static int getDeviceIcon(AudioDeviceInfo device) {
-        if (device == null) return R.drawable.ic_speaker;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            switch (device.getType()) {
-                case AudioDeviceInfo.TYPE_BUILTIN_SPEAKER:
-                    return R.drawable.ic_speaker;
-                case AudioDeviceInfo.TYPE_WIRED_HEADSET:
-                case AudioDeviceInfo.TYPE_WIRED_HEADPHONES:
-                    return R.drawable.ic_headphones;
-                case AudioDeviceInfo.TYPE_BLUETOOTH_A2DP:
-                case AudioDeviceInfo.TYPE_BLUETOOTH_SCO:
-                    return R.drawable.ic_bluetooth;
-                case AudioDeviceInfo.TYPE_USB_DEVICE:
-                case AudioDeviceInfo.TYPE_USB_HEADSET:
-                    return R.drawable.ic_audio_output;
-                default:
-                    return R.drawable.ic_audio_output;
-            }
-        }
-        return R.drawable.ic_speaker;
+        return AudioDeviceHelper.getDeviceIcon(device);
     }
 }
