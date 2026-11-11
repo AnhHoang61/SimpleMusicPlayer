@@ -6,25 +6,24 @@
     android:orientation="horizontal"
     android:gravity="center_vertical"
     android:paddingHorizontal="16dp"
-    android:paddingVertical="10dp"
+    android:paddingVertical="12dp"
     android:background="?attr/selectableItemBackground">
 
     <FrameLayout
-        android:layout_width="48dp"
-        android:layout_height="48dp">
+        android:layout_width="46dp"
+        android:layout_height="46dp">
 
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/bg_play_btn"
-            android:alpha="0.25" />
+            android:background="@drawable/bg_pill_search" />
 
         <ImageView
             android:id="@+id/ivSongIcon"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:layout_gravity="center"
-            android:src="@drawable/ic_music_note"
+            android:src="@drawable/ic_katana"
             android:tint="@color/primary_accent" />
     </FrameLayout>
 
@@ -45,7 +44,7 @@
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end"
-            android:text="Tên bài hát" />
+            android:text="Tên khúc nhạc" />
 
         <TextView
             android:id="@+id/tvSongArtist"
@@ -56,15 +55,16 @@
             android:layout_marginTop="2dp"
             android:maxLines="1"
             android:ellipsize="end"
-            android:text="Nghệ sĩ" />
+            android:text="Kiếm khách" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/tvSongDuration"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/text_muted"
+        android:textColor="@color/accent_gold"
         android:textSize="12sp"
+        android:fontFamily="monospace"
         android:text="03:45" />
 
 </LinearLayout>

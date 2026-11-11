@@ -1,0 +1,27 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Japanese Mon / Samurai Crest -->
+    <path
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="1.5"
+        android:pathData="M12,12 m-10,0 a10,10 0 1,1 20,0 a10,10 0 1,1 -20,0" />
+    <!-- 4 Diamond petals (Takeda clan mon / Bishi style) -->
+    <path
+        android:fillColor="#E63946"
+        android:pathData="M12,4 L15,8 L12,12 L9,8 Z" />
+    <path
+        android:fillColor="#E63946"
+        android:pathData="M12,20 L15,16 L12,12 L9,16 Z" />
+    <path
+        android:fillColor="#E63946"
+        android:pathData="M4,12 L8,9 L12,12 L8,15 Z" />
+    <path
+        android:fillColor="#E63946"
+        android:pathData="M20,12 L16,9 L12,12 L16,15 Z" />
+    <path
+        android:fillColor="#D4AF37"
+        android:pathData="M12,10.5 L13.5,12 L12,13.5 L10.5,12 Z" />
+</vector>

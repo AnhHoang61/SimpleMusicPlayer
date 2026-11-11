@@ -2,7 +2,10 @@ package com.example.simplemusicplayer;
 
 import android.content.Context;
 import android.media.AudioAttributes;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -28,7 +31,9 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
 
     private static MusicPlayerManager instance;
 
+    private Context appContext;
     private MediaPlayer mediaPlayer;
+    private AudioDeviceInfo selectedAudioDevice = null;
     private final List<Song> playlist = new ArrayList<>();
     private final List<Integer> playOrder = new ArrayList<>();
     private int currentOrderIndex = -1;
@@ -95,6 +100,19 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
         }
     }
 
+    public List<Song> getPlaylist() {
+        return new ArrayList<>(playlist);
+    }
+
+    public void playSongById(Context context, long id) {
+        for (int i = 0; i < playlist.size(); i++) {
+            if (playlist.get(i).getId() == id) {
+                playSongAtIndex(context, i);
+                break;
+            }
+        }
+    }
+
     public void playSongAtIndex(Context context, int index) {
         if (index < 0 || index >= playlist.size()) return;
 
@@ -109,6 +127,9 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
     }
 
     private void playCurrentOrder(Context context) {
+        if (context != null) {
+            this.appContext = context.getApplicationContext();
+        }
         if (currentOrderIndex < 0 || currentOrderIndex >= playOrder.size()) return;
 
         int songIndex = playOrder.get(currentOrderIndex);
@@ -149,6 +170,9 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
 
     @Override
     public void onPrepared(MediaPlayer mp) {
+        if (selectedAudioDevice != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            mp.setPreferredDevice(selectedAudioDevice);
+        }
         mp.start();
         notifyStateChanged(true);
         startProgressTracking();
@@ -288,12 +312,10 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
             mp.seekTo(0);
             mp.start();
         } else {
-            // Need a context to play next
             stopProgressTracking();
             notifyStateChanged(false);
-            // Auto next handled via listeners or next call
-            if (listeners.size() > 0) {
-                // Next track
+
+            if (appContext != null && !playOrder.isEmpty()) {
                 currentOrderIndex++;
                 if (currentOrderIndex >= playOrder.size()) {
                     if (repeatMode == RepeatMode.ALL) {
@@ -302,17 +324,7 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
                         return;
                     }
                 }
-                // Call play from current
-                notifyCompletionAutoNext();
-            }
-        }
-    }
-
-    private void notifyCompletionAutoNext() {
-        for (PlaybackListener listener : new ArrayList<>(listeners)) {
-            if (listener instanceof MainActivity) {
-                playCurrentOrder((Context) listener);
-                break;
+                playCurrentOrder(appContext);
             }
         }
     }
@@ -350,5 +362,91 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener, Med
         for (PlaybackListener listener : new ArrayList<>(listeners)) {
             listener.onProgressChanged(cur, total);
         }
+    }
+
+    public boolean setAudioOutputDevice(AudioDeviceInfo device) {
+        this.selectedAudioDevice = device;
+        if (mediaPlayer != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            return mediaPlayer.setPreferredDevice(device);
+        }
+        return false;
+    }
+
+    public AudioDeviceInfo getSelectedAudioDevice() {
+        return selectedAudioDevice;
+    }
+
+    public List<AudioDeviceInfo> getAvailableAudioDevices(Context context) {
+        List<AudioDeviceInfo> list = new ArrayList<>();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null) {
+            AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+            if (am != null) {
+                AudioDeviceInfo[] devices = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+                for (AudioDeviceInfo d : devices) {
+                    int type = d.getType();
+                    if (type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER ||
+                        type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
+                        type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
+                        type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
+                        type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                        type == AudioDeviceInfo.TYPE_USB_DEVICE ||
+                        type == AudioDeviceInfo.TYPE_USB_HEADSET ||
+                        type == AudioDeviceInfo.TYPE_LINE_ANALOG) {
+                        list.add(d);
+                    }
+                }
+            }
+        }
+        return list;
+    }
+
+    public static String getDeviceTypeName(AudioDeviceInfo device) {
+        if (device == null) return "Mặc định (Loa máy)";
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            CharSequence name = device.getProductName();
+            if (name != null && name.length() > 0 && !name.toString().trim().equalsIgnoreCase("Speaker")) {
+                return name.toString();
+            }
+            switch (device.getType()) {
+                case AudioDeviceInfo.TYPE_BUILTIN_SPEAKER:
+                    return "Loa ngoài điện thoại";
+                case AudioDeviceInfo.TYPE_WIRED_HEADSET:
+                case AudioDeviceInfo.TYPE_WIRED_HEADPHONES:
+                    return "Tai nghe có dây";
+                case AudioDeviceInfo.TYPE_BLUETOOTH_A2DP:
+                case AudioDeviceInfo.TYPE_BLUETOOTH_SCO:
+                    return "Tai nghe / Loa Bluetooth";
+                case AudioDeviceInfo.TYPE_USB_DEVICE:
+                case AudioDeviceInfo.TYPE_USB_HEADSET:
+                    return "Thiết bị âm thanh USB-C";
+                case AudioDeviceInfo.TYPE_LINE_ANALOG:
+                    return "Cáp âm thanh AUX";
+                default:
+                    return "Thiết bị âm thanh ngoài";
+            }
+        }
+        return "Loa thiết bị";
+    }
+
+    public static int getDeviceIcon(AudioDeviceInfo device) {
+        if (device == null) return R.drawable.ic_speaker;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            switch (device.getType()) {
+                case AudioDeviceInfo.TYPE_BUILTIN_SPEAKER:
+                    return R.drawable.ic_speaker;
+                case AudioDeviceInfo.TYPE_WIRED_HEADSET:
+                case AudioDeviceInfo.TYPE_WIRED_HEADPHONES:
+                    return R.drawable.ic_headphones;
+                case AudioDeviceInfo.TYPE_BLUETOOTH_A2DP:
+                case AudioDeviceInfo.TYPE_BLUETOOTH_SCO:
+                    return R.drawable.ic_bluetooth;
+                case AudioDeviceInfo.TYPE_USB_DEVICE:
+                case AudioDeviceInfo.TYPE_USB_HEADSET:
+                    return R.drawable.ic_audio_output;
+                default:
+                    return R.drawable.ic_audio_output;
+            }
+        }
+        return R.drawable.ic_speaker;
     }
 }

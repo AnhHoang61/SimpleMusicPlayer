@@ -14,13 +14,13 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="16dp"
         android:background="@drawable/bg_pill_search"
-        android:alpha="0.6" />
+        android:alpha="0.8" />
 
     <!-- Header bar with collapse button -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="12dp">
 
         <ImageView
             android:id="@+id/btnCollapse"
@@ -38,42 +38,28 @@
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:text="@string/now_playing"
-            android:textColor="@color/text_secondary"
+            android:textColor="@color/accent_gold"
             android:textSize="13sp"
             android:textStyle="bold"
-            android:letterSpacing="0.08" />
+            android:letterSpacing="0.1" />
     </RelativeLayout>
 
-    <!-- Vinyl Disc / Artwork container -->
+    <!-- Samurai Tsuba Disc Container (Interactive Spinning Guard) -->
     <FrameLayout
         android:id="@+id/layoutDiscContainer"
         android:layout_width="220dp"
         android:layout_height="220dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginVertical="16dp">
+        android:layout_marginVertical="14dp">
 
-        <!-- Outer Vinyl Disc -->
-        <View
+        <!-- Spinning Tsuba Sword Guard -->
+        <ImageView
             android:id="@+id/viewVinylDisc"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/bg_album_disc" />
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_tsuba_disc" />
 
-        <!-- Inner Disc Ring -->
-        <View
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_gravity="center"
-            android:background="@drawable/bg_play_btn"
-            android:alpha="0.8" />
-
-        <!-- Center Hole Icon -->
-        <ImageView
-            android:layout_width="38dp"
-            android:layout_height="38dp"
-            android:layout_gravity="center"
-            android:src="@drawable/ic_music_note"
-            android:tint="@color/white" />
     </FrameLayout>
 
     <!-- Track Details -->
@@ -87,9 +73,9 @@
         android:ellipsize="marquee"
         android:marqueeRepeatLimit="marquee_forever"
         android:singleLine="true"
-        android:text="Tên bài hát"
+        android:text="Tên khúc nhạc"
         android:textColor="@color/text_primary"
-        android:textSize="18sp"
+        android:textSize="19sp"
         android:textStyle="bold" />
 
     <TextView
@@ -100,28 +86,58 @@
         android:gravity="center"
         android:maxLines="1"
         android:ellipsize="end"
-        android:text="Nghệ sĩ"
-        android:textColor="@color/text_secondary"
+        android:text="Kiếm khách"
+        android:textColor="@color/accent_gold"
         android:textSize="14sp" />
 
-    <!-- SeekBar and Times -->
+    <!-- Katana Blade SeekBar and Times -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:orientation="vertical">
 
-        <SeekBar
-            android:id="@+id/seekBarPlayer"
+        <!-- Visual Katana Sword Assembly (Chuôi kiếm - Thân kiếm SeekBar - Mũi kiếm) -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:progressTint="@color/primary_accent"
-            android:thumbTint="@color/accent_play" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- Katana Tsuka (Chuôi kiếm bên trái) -->
+            <ImageView
+                android:layout_width="34dp"
+                android:layout_height="22dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_katana_tsuka_left" />
+
+            <!-- Katana Blade SeekBar (Lưỡi kiếm chính) -->
+            <SeekBar
+                android:id="@+id/seekBarPlayer"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:maxHeight="8dp"
+                android:minHeight="8dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:progressDrawable="@drawable/seek_bar_katana_track"
+                android:thumb="@drawable/ic_katana_thumb"
+                android:splitTrack="false" />
+
+            <!-- Katana Kissaki (Mũi kiếm vát nhọn bên phải) -->
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="22dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_katana_kissaki_right" />
+        </LinearLayout>
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp">
+            android:layout_marginTop="4dp"
+            android:paddingHorizontal="4dp">
 
             <TextView
                 android:id="@+id/tvCurrentTime"
@@ -130,7 +146,18 @@
                 android:layout_alignParentStart="true"
                 android:text="00:00"
                 android:textColor="@color/text_muted"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:fontFamily="monospace" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="KATANA · 刀"
+                android:textColor="@color/primary_accent"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.2" />
 
             <TextView
                 android:id="@+id/tvTotalTime"
@@ -138,8 +165,9 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
                 android:text="00:00"
-                android:textColor="@color/text_muted"
-                android:textSize="12sp" />
+                android:textColor="@color/accent_gold"
+                android:textSize="12sp"
+                android:fontFamily="monospace" />
         </RelativeLayout>
     </LinearLayout>
 
@@ -156,10 +184,10 @@
         <ImageView
             android:id="@+id/btnShuffle"
             android:layout_width="0dp"
-            android:layout_height="36dp"
+            android:layout_height="38dp"
             android:layout_weight="1"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="6dp"
+            android:padding="7dp"
             android:src="@drawable/ic_shuffle"
             android:tint="@color/text_muted" />
 
@@ -183,12 +211,12 @@
 
             <ImageButton
                 android:id="@+id/btnPlayPauseLarge"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="62dp"
+                android:layout_height="62dp"
                 android:layout_gravity="center"
                 android:background="@drawable/bg_play_btn"
-                android:elevation="4dp"
-                android:padding="14dp"
+                android:elevation="6dp"
+                android:padding="16dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_play"
                 android:tint="@color/white" />
@@ -209,10 +237,10 @@
         <ImageView
             android:id="@+id/btnRepeat"
             android:layout_width="0dp"
-            android:layout_height="36dp"
+            android:layout_height="38dp"
             android:layout_weight="1"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="6dp"
+            android:padding="7dp"
             android:src="@drawable/ic_repeat"
             android:tint="@color/text_muted" />
     </LinearLayout>

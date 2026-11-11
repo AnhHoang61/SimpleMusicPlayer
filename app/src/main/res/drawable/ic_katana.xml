@@ -1,0 +1,26 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Slanted Katana Sword: Tsuka (handle), Tsuba (guard), and Blade with Kissaki (tip) -->
+    <!-- Blade Curve -->
+    <path
+        android:fillColor="#F3F4F6"
+        android:pathData="M21.5,2.5 C20.8,2.2 19.5,2.8 17.5,4.8 L9.5,12.8 L11.2,14.5 L19.2,6.5 C21.2,4.5 21.8,3.2 21.5,2.5 Z" />
+    <!-- Hamon Line (Red Temper line) -->
+    <path
+        android:strokeColor="#E63946"
+        android:strokeWidth="0.8"
+        android:pathData="M18.8,6.8 L10.8,14.8" />
+    <!-- Tsuba (Sword Guard) -->
+    <path
+        android:fillColor="#D4AF37"
+        android:pathData="M8.2,12.2 L12.2,16.2 L11.2,17.2 L7.2,13.2 Z" />
+    <!-- Tsuka (Handle with Tsuka-ito wrap) -->
+    <path
+        android:fillColor="#800F19"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="0.5"
+        android:pathData="M8.5,13.5 L4.5,17.5 C3.8,18.2 3.8,19.2 4.5,19.9 L4.1,20.3 C3.4,21 2.4,21 1.7,20.3 C1,19.6 1,18.6 1.7,17.9 L6.5,13.1 L8.5,13.5 Z" />
+</vector>

@@ -1,12 +1,13 @@
 <resources>
-    <string name="app_name">Nhạc Của Tôi</string>
-    <string name="search_hint">Tìm bài hát, ca sĩ...</string>
-    <string name="no_songs_found">Không tìm thấy bài hát nào</string>
-    <string name="permission_required">Cần cấp quyền truy cập để quét các bài nhạc MP3 trong điện thoại của bạn.</string>
+    <string name="app_name">V-Music</string>
+    <string name="app_subname">武士の響 · V-Music</string>
+    <string name="search_hint">Tìm kiếm khúc nhạc, kiếm khách...</string>
+    <string name="no_songs_found">Chưa tìm thấy khúc nhạc nào</string>
+    <string name="permission_required">Cần cấp quyền truy cập để tìm kiếm các bản nhạc trong điện thoại của bạn.</string>
     <string name="grant_permission">Cấp quyền truy cập nhạc</string>
-    <string name="scanning_music">Đang quét thư viện nhạc...</string>
-    <string name="songs_count">%d bài hát</string>
-    <string name="unknown_artist">Nghệ sĩ chưa rõ</string>
-    <string name="unknown_title">Bài hát không tên</string>
-    <string name="now_playing">Đang phát</string>
+    <string name="scanning_music">Đang cảm thụ kiếm khúc trong máy...</string>
+    <string name="songs_count">%d khúc nhạc</string>
+    <string name="unknown_artist">Kiếm khách ẩn danh</string>
+    <string name="unknown_title">Khúc nhạc vô danh</string>
+    <string name="now_playing">ĐANG PHÁT NHẠC</string>
 </resources>

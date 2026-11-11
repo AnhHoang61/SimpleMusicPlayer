@@ -67,10 +67,12 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.SongViewHold
         boolean isSelected = (song.getId() == currentPlayingSongId);
         if (isSelected) {
             holder.tvTitle.setTextColor(ContextCompat.getColor(context, R.color.primary_accent));
-            holder.ivIcon.setColorFilter(ContextCompat.getColor(context, R.color.accent_play));
+            holder.ivIcon.setColorFilter(ContextCompat.getColor(context, R.color.primary_accent));
+            holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.surface_card_selected));
         } else {
             holder.tvTitle.setTextColor(ContextCompat.getColor(context, R.color.text_primary));
-            holder.ivIcon.setColorFilter(ContextCompat.getColor(context, R.color.primary_accent));
+            holder.ivIcon.setColorFilter(ContextCompat.getColor(context, R.color.accent_gold));
+            holder.itemView.setBackgroundColor(Color.TRANSPARENT);
         }
 
         holder.itemView.setOnClickListener(v -> {

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Unplayed Blade Background (Thép Tamahagane chưa rút kiếm) -->
+    <item android:id="@android:id/background">
+        <shape android:shape="rectangle">
+            <corners android:radius="2dp" />
+            <size android:height="8dp" />
+            <gradient
+                android:angle="270"
+                android:startColor="#F3F4F6"
+                android:centerColor="#4B5563"
+                android:endColor="#1E161D" />
+            <stroke
+                android:width="1dp"
+                android:color="#3D2934" />
+        </shape>
+    </item>
+
+    <!-- Played Blade Hamon (Vết chém Huyết Kiếm lướt qua) -->
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape android:shape="rectangle">
+                <corners android:radius="2dp" />
+                <size android:height="8dp" />
+                <gradient
+                    android:angle="0"
+                    android:startColor="#800F19"
+                    android:centerColor="#C21807"
+                    android:endColor="#E63946" />
+                <stroke
+                    android:width="1dp"
+                    android:color="#D4AF37" />
+            </shape>
+        </clip>
+    </item>
+
+</layer-list>

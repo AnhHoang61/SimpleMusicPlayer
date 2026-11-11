@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="26dp"
+    android:height="24dp"
+    android:viewportWidth="26"
+    android:viewportHeight="24">
+
+    <!-- Blade continuation -->
+    <path
+        android:fillColor="#E0E1DD"
+        android:pathData="M0,7 L10,7 L23,12 L10,17 L0,17 Z" />
+
+    <!-- Sharp Kissaki Tip (Beveled curved point) -->
+    <path
+        android:fillColor="#F8F9FA"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="0.8"
+        android:pathData="M10,7 L24,12 L10,17 Z" />
+
+    <!-- Red Hamon Temper Line on tip -->
+    <path
+        android:fillColor="#E63946"
+        android:pathData="M2,12 Q12,11 18,12 L24,12 L14,16 L0,16 Z" />
+
+    <!-- Yokote Line (Perpendicular line separating tip from blade) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.8"
+        android:pathData="M10,7 L10,17" />
+
+</vector>

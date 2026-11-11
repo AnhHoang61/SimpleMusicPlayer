@@ -1,0 +1,31 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="28"
+    android:viewportHeight="28">
+
+    <!-- Outer Gold Diamond Tsuba Ring -->
+    <path
+        android:fillColor="#D4AF37"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1"
+        android:pathData="M14,1 L27,14 L14,27 L1,14 Z" />
+
+    <!-- Inner Iron Guard Layer -->
+    <path
+        android:fillColor="#1A1216"
+        android:pathData="M14,4 L24,14 L14,24 L4,14 Z" />
+
+    <!-- Blood Crimson Core -->
+    <path
+        android:fillColor="#E63946"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="0.8"
+        android:pathData="M14,6 L22,14 L14,22 L6,14 Z" />
+
+    <!-- Vertical Katana Blade Cut / Spark -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M13,3 L15,3 L15.5,14 L15,25 L13,25 L12.5,14 Z" />
+
+</vector>

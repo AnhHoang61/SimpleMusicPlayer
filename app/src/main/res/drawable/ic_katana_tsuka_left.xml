@@ -1,0 +1,45 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="36dp"
+    android:height="24dp"
+    android:viewportWidth="36"
+    android:viewportHeight="24">
+
+    <!-- Kashira (Gold Pommel Cap at leftmost end) -->
+    <path
+        android:fillColor="#D4AF37"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.5"
+        android:pathData="M2,7 C2,5 4,4 6,4 L8,4 L8,20 L6,20 C4,20 2,19 2,17 Z" />
+
+    <!-- Tsuka Body (Handle with dark crimson base) -->
+    <path
+        android:fillColor="#800F19"
+        android:pathData="M8,5 L30,5 L30,19 L8,19 Z" />
+
+    <!-- Tsuka-Ito Wrap (Traditional criss-cross cord braiding) -->
+    <!-- Diamond 1 -->
+    <path
+        android:fillColor="#1A1216"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="1"
+        android:pathData="M12,12 L15,8 L18,12 L15,16 Z" />
+    <!-- Diamond 2 -->
+    <path
+        android:fillColor="#1A1216"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="1"
+        android:pathData="M20,12 L23,8 L26,12 L23,16 Z" />
+
+    <!-- Fuchi (Handle Collar Ring before guard) -->
+    <path
+        android:fillColor="#D4AF37"
+        android:pathData="M28,4 L31,4 L31,20 L28,20 Z" />
+
+    <!-- Habaki Collar / Mini Tsuba (Blade collar connecting directly to seekbar blade) -->
+    <path
+        android:fillColor="#E63946"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="1"
+        android:pathData="M31,3 L35,3 L35,21 L31,21 Z" />
+
+</vector>

@@ -1,0 +1,70 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="220dp"
+    android:height="220dp"
+    android:viewportWidth="220"
+    android:viewportHeight="220">
+
+    <!-- Outer Iron Rim (Tsuba Mimi) with subtle gold edge -->
+    <path
+        android:fillColor="#1C141A"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="3.5"
+        android:pathData="M110,110 m-100,0 a100,100 0 1,1 200,0 a100,100 0 1,1 -200,0" />
+
+    <!-- Outer Decorative Concentric Groove -->
+    <path
+        android:strokeColor="#4A2632"
+        android:strokeWidth="1.5"
+        android:strokeAlpha="0.7"
+        android:pathData="M110,110 m-88,0 a88,88 0 1,1 176,0 a88,88 0 1,1 -176,0" />
+
+    <!-- Dashed Gold Inlay Ring (Damascene Zogan) -->
+    <path
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="1.5"
+        android:strokeAlpha="0.6"
+        android:pathData="M110,110 m-74,0 a74,74 0 1,1 148,0 a74,74 0 1,1 -148,0" />
+
+    <!-- Traditional Tsuba Sukashi Cutouts: Kozuka-Hitsu-Ana (Left side cutout) -->
+    <path
+        android:fillColor="#0D0C10"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="1"
+        android:pathData="M56,92 C50,92 46,98 46,110 C46,122 50,128 56,128 C62,128 66,122 66,110 C66,98 62,92 56,92 Z" />
+
+    <!-- Traditional Tsuba Sukashi Cutouts: Kogai-Hitsu-Ana (Right side shamrock cutout) -->
+    <path
+        android:fillColor="#0D0C10"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="1"
+        android:pathData="M164,92 C158,92 154,98 154,110 C154,122 158,128 164,128 C170,128 174,122 174,110 C174,98 170,92 164,92 Z" />
+
+    <!-- Top & Bottom Sakura Petal Inlay Emblems -->
+    <path
+        android:fillColor="#E63946"
+        android:pathData="M110,32 C106,38 106,44 110,48 C114,44 114,38 110,32 Z" />
+    <path
+        android:fillColor="#E63946"
+        android:pathData="M110,188 C106,182 106,176 110,172 C114,176 114,182 110,188 Z" />
+
+    <!-- Seppa-Dai (Center Oval Washer Area - Crimson Blood Rim) -->
+    <path
+        android:fillColor="#800F19"
+        android:strokeColor="#E63946"
+        android:strokeWidth="2.5"
+        android:pathData="M110,110 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0" />
+
+    <!-- Center Ring Accent -->
+    <path
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="1.5"
+        android:pathData="M110,110 m-28,0 a28,28 0 1,1 56,0 a28,28 0 1,1 -56,0" />
+
+    <!-- Nakago-Ana (Center Sword Tang Slot for Katana blade) -->
+    <path
+        android:fillColor="#0D0C10"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="1.2"
+        android:pathData="M106,86 L114,86 L117,110 L115,134 L105,134 L103,110 Z" />
+
+</vector>
