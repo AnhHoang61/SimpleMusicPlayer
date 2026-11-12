@@ -172,7 +172,13 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener,
                             .build()
             );
 
-            mediaPlayer.setDataSource(context, song.getUri());
+            if (song.getId() > 0) {
+                mediaPlayer.setDataSource(context, song.getUri());
+            } else if (song.getPath() != null) {
+                mediaPlayer.setDataSource(song.getPath());
+            } else {
+                mediaPlayer.setDataSource(context, song.getUri());
+            }
             mediaPlayer.setOnPreparedListener(this);
             mediaPlayer.setOnCompletionListener(this);
             mediaPlayer.setOnErrorListener(this);

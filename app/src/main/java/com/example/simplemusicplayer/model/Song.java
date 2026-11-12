@@ -18,7 +18,7 @@ public class Song implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final long id;
-    private final String title;
+    private String title;
     private final String artist;
     private final long duration;
     private final String path;
@@ -43,6 +43,12 @@ public class Song implements Serializable {
         return title;
     }
 
+    public void setTitle(String newTitle) {
+        if (newTitle != null && !newTitle.trim().isEmpty()) {
+            this.title = newTitle.trim();
+        }
+    }
+
     public String getArtist() {
         return artist;
     }
@@ -57,6 +63,30 @@ public class Song implements Serializable {
 
     public long getAlbumId() {
         return albumId;
+    }
+
+    public String getParentFolderName() {
+        if (path == null || path.trim().isEmpty()) return "Thư mục chung";
+        try {
+            java.io.File file = new java.io.File(path);
+            java.io.File parent = file.getParentFile();
+            if (parent != null && parent.getName() != null && !parent.getName().isEmpty()) {
+                return parent.getName();
+            }
+        } catch (Exception ignored) {}
+        return "Bộ nhớ máy";
+    }
+
+    public String getParentFolderPath() {
+        if (path == null || path.trim().isEmpty()) return "";
+        try {
+            java.io.File file = new java.io.File(path);
+            java.io.File parent = file.getParentFile();
+            if (parent != null) {
+                return parent.getAbsolutePath();
+            }
+        } catch (Exception ignored) {}
+        return "";
     }
 
     public Uri getUri() {

@@ -12,10 +12,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="16dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp">
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp">
 
-        <!-- App Branding (Constrained to start of tabs so it never collides or truncates) -->
+        <!-- App Branding -->
         <LinearLayout
             android:id="@+id/layoutBrand"
             android:layout_width="match_parent"
@@ -33,8 +33,8 @@
                 android:orientation="horizontal">
 
                 <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
                     android:layout_marginEnd="8dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_app_logo" />
@@ -45,7 +45,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/app_name"
                     android:textColor="@color/text_primary"
-                    android:textSize="22sp"
+                    android:textSize="20sp"
                     android:textStyle="bold"
                     android:singleLine="true"
                     android:ellipsize="end"
@@ -77,8 +77,8 @@
 
             <ImageView
                 android:id="@+id/btnOpenSync"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
                 android:layout_marginEnd="8dp"
                 android:background="@drawable/bg_pill_search"
                 android:clickable="true"
@@ -90,7 +90,7 @@
             <LinearLayout
                 android:id="@+id/layoutTabs"
                 android:layout_width="wrap_content"
-                android:layout_height="36dp"
+                android:layout_height="34dp"
                 android:background="@drawable/bg_pill_search"
                 android:padding="2dp">
 
@@ -127,7 +127,7 @@
         android:layout_height="1dp"
         android:background="@color/divider_color" />
 
-    <!-- Main Content Area: Tab 1 (Full Samurai Player) vs Tab 2 (Song Library) -->
+    <!-- Main Content Area: Tab 1 (Full Player) vs Tab 2 (Library) -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -139,6 +139,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true"
+            android:scrollbars="none"
             android:visibility="visible">
 
             <LinearLayout
@@ -146,15 +147,16 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
                 android:orientation="vertical"
-                android:paddingHorizontal="24dp"
-                android:paddingVertical="16dp">
+                android:paddingHorizontal="22dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="16dp">
 
-                <!-- Playing Status Indicator -->
+                <!-- Playing Status Indicator & Current Theme/Folder Badge -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
-                    android:layout_marginBottom="12dp">
+                    android:orientation="horizontal">
 
                     <View
                         android:id="@+id/dotPulse"
@@ -172,14 +174,33 @@
                         android:textSize="12sp"
                         android:textStyle="bold"
                         android:letterSpacing="0.12" />
+
+                    <TextView
+                        android:id="@+id/tvPlayerSourceBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_pill_search"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp"
+                        android:text="⚔️ Danh sách máy"
+                        android:textColor="@color/accent_gold"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- Central Majestic Rotating Tsuba Disc -->
+                <!-- Flexible Top Spacer -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="0.8" />
+
+                <!-- Central Rotating Katana Tsuba Disc -->
                 <FrameLayout
                     android:id="@+id/layoutDiscContainer"
-                    android:layout_width="250dp"
-                    android:layout_height="250dp"
-                    android:layout_marginVertical="14dp">
+                    android:layout_width="260dp"
+                    android:layout_height="260dp"
+                    android:layout_marginVertical="8dp">
 
                     <!-- Ambient Glow Ring -->
                     <View
@@ -188,61 +209,67 @@
                         android:layout_height="match_parent"
                         android:background="@drawable/bg_tsuba_glow" />
 
-                    <!-- Photorealistic Antique Katana Tsuba Sword Guard (Spins smoothly) -->
+                    <!-- Photorealistic Antique Katana Tsuba Sword Guard -->
                     <ImageView
                         android:id="@+id/viewVinylDisc"
-                        android:layout_width="230dp"
-                        android:layout_height="230dp"
+                        android:layout_width="240dp"
+                        android:layout_height="240dp"
                         android:layout_gravity="center"
                         android:scaleType="fitCenter"
                         android:src="@drawable/img_tsuba_disc" />
                 </FrameLayout>
+
+                <!-- Flexible Mid Spacer -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="0.6" />
 
                 <!-- Song Title & Artist -->
                 <TextView
                     android:id="@+id/tvSheetTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="8dp"
                     android:ellipsize="marquee"
                     android:gravity="center"
                     android:marqueeRepeatLimit="marquee_forever"
                     android:singleLine="true"
                     android:text="The Way of the Ghost"
                     android:textColor="@color/text_primary"
-                    android:textSize="21sp"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvSheetArtist"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
+                    android:layout_marginTop="4dp"
                     android:ellipsize="end"
                     android:gravity="center"
                     android:maxLines="1"
                     android:text="⚔️ Ilan Eshkeri (Ghost of Tsushima)"
                     android:textColor="@color/accent_gold"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <!-- Audio Output Routing Pill Button -->
                 <LinearLayout
                     android:id="@+id/btnAudioOutput"
                     android:layout_width="wrap_content"
-                    android:layout_height="32dp"
-                    android:layout_marginTop="10dp"
+                    android:layout_height="30dp"
+                    android:layout_marginTop="8dp"
                     android:background="@drawable/bg_pill_search"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:paddingHorizontal="14dp">
+                    android:paddingHorizontal="12dp">
 
                     <ImageView
                         android:id="@+id/ivOutputIcon"
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
                         android:src="@drawable/ic_speaker"
                         android:tint="@color/accent_gold" />
 
@@ -253,44 +280,43 @@
                         android:layout_marginStart="6dp"
                         android:text="Loa ngoài điện thoại"
                         android:textColor="@color/accent_gold"
-                        android:textSize="12sp"
+                        android:textSize="11sp"
                         android:textStyle="bold" />
 
                     <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:layout_marginStart="6dp"
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_marginStart="4dp"
                         android:src="@drawable/ic_chevron_down"
                         android:tint="@color/text_muted" />
                 </LinearLayout>
 
                 <!-- Katana Seekbar & Timestamps -->
-                <!-- Authentic Katana Sword Playback Seekbar -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="14dp"
                     android:orientation="vertical">
 
-                    <!-- Visual Katana Sword Assembly (Chuôi kiếm - Thân kiếm SeekBar - Mũi kiếm) -->
+                    <!-- Visual Katana Sword Assembly -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <!-- Katana Tsuka (Chuôi kiếm bên trái) -->
+                        <!-- Katana Tsuka -->
                         <ImageView
-                            android:layout_width="34dp"
-                            android:layout_height="22dp"
+                            android:layout_width="32dp"
+                            android:layout_height="20dp"
                             android:scaleType="fitCenter"
                             android:src="@drawable/ic_katana_tsuka_left" />
 
-                        <!-- Katana Blade SeekBar (Lưỡi kiếm chính) -->
+                        <!-- Katana Blade SeekBar -->
                         <SeekBar
                             android:id="@+id/seekBarPlayer"
                             android:layout_width="0dp"
-                            android:layout_height="32dp"
+                            android:layout_height="30dp"
                             android:layout_weight="1"
                             android:maxHeight="8dp"
                             android:minHeight="8dp"
@@ -300,10 +326,10 @@
                             android:thumb="@drawable/ic_katana_thumb"
                             android:splitTrack="false" />
 
-                        <!-- Katana Kissaki (Mũi kiếm vát nhọn bên phải) -->
+                        <!-- Katana Kissaki -->
                         <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="22dp"
+                            android:layout_width="22dp"
+                            android:layout_height="20dp"
                             android:scaleType="fitCenter"
                             android:src="@drawable/ic_katana_kissaki_right" />
                     </LinearLayout>
@@ -311,7 +337,7 @@
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="2dp"
                         android:paddingHorizontal="4dp">
 
                         <TextView
@@ -322,7 +348,7 @@
                             android:fontFamily="monospace"
                             android:text="00:00"
                             android:textColor="@color/text_muted"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -330,7 +356,7 @@
                             android:layout_centerInParent="true"
                             android:text="KATANA · 刀"
                             android:textColor="@color/primary_accent"
-                            android:textSize="10sp"
+                            android:textSize="9sp"
                             android:textStyle="bold"
                             android:letterSpacing="0.2" />
 
@@ -342,7 +368,7 @@
                             android:fontFamily="monospace"
                             android:text="00:00"
                             android:textColor="@color/accent_gold"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
                     </RelativeLayout>
                 </LinearLayout>
 
@@ -350,12 +376,12 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="12dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:weightSum="5">
 
-                    <!-- Shuffle (Ran - 乱) -->
+                    <!-- Shuffle -->
                     <ImageView
                         android:id="@+id/btnShuffle"
                         android:layout_width="0dp"
@@ -377,7 +403,7 @@
                         android:src="@drawable/ic_skip_previous"
                         android:tint="@color/text_primary" />
 
-                    <!-- Play / Pause (Big Crimson Button with Gold Rim) -->
+                    <!-- Play / Pause -->
                     <FrameLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -386,12 +412,12 @@
 
                         <ImageButton
                             android:id="@+id/btnPlayPauseLarge"
-                            android:layout_width="66dp"
-                            android:layout_height="66dp"
+                            android:layout_width="64dp"
+                            android:layout_height="64dp"
                             android:layout_gravity="center"
                             android:background="@drawable/bg_play_btn"
                             android:elevation="8dp"
-                            android:padding="18dp"
+                            android:padding="16dp"
                             android:scaleType="fitCenter"
                             android:src="@drawable/ic_play"
                             android:tint="@color/white" />
@@ -408,7 +434,7 @@
                         android:src="@drawable/ic_skip_next"
                         android:tint="@color/text_primary" />
 
-                    <!-- Repeat (Jun - 巡) -->
+                    <!-- Repeat -->
                     <ImageView
                         android:id="@+id/btnRepeat"
                         android:layout_width="0dp"
@@ -420,21 +446,109 @@
                         android:tint="@color/primary_accent" />
                 </LinearLayout>
 
+                <!-- Flexible Lower Spacer -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <!-- Player Quick Action Bar (Favorite, Add to Album, Rename, Delete, Queue) -->
+                <LinearLayout
+                    android:id="@+id/layoutPlayerQuickActions"
+                    android:layout_width="wrap_content"
+                    android:layout_height="46dp"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_pill_search"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="10dp">
+
+                    <!-- Favorite Button -->
+                    <ImageView
+                        android:id="@+id/btnPlayerFavorite"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="9dp"
+                        android:src="@drawable/ic_favorite_border"
+                        android:tint="@color/accent_heart" />
+
+                    <!-- Add to Themed Album -->
+                    <ImageView
+                        android:id="@+id/btnPlayerAddToAlbum"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="4dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="9dp"
+                        android:src="@drawable/ic_playlist_add"
+                        android:tint="@color/accent_gold" />
+
+                    <!-- Rename Song -->
+                    <ImageView
+                        android:id="@+id/btnPlayerRename"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="4dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="9dp"
+                        android:src="@drawable/ic_edit"
+                        android:tint="@color/accent_gold_light" />
+
+                    <!-- Delete Song -->
+                    <ImageView
+                        android:id="@+id/btnPlayerDelete"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="4dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="9dp"
+                        android:src="@drawable/ic_delete"
+                        android:tint="@color/primary_accent" />
+
+                    <!-- View Song List / Queue -->
+                    <ImageView
+                        android:id="@+id/btnPlayerQueue"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="4dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="9dp"
+                        android:src="@drawable/ic_queue_music"
+                        android:tint="@color/text_primary" />
+                </LinearLayout>
+
+                <!-- Flexible Bottom Spacer -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="0.8" />
+
                 <!-- Bushido Tagline -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="10dp"
                     android:text="“Kiếm bén nhờ mài · Nhạc hay nhờ lòng”"
                     android:textColor="@color/accent_gold"
                     android:textSize="12sp"
                     android:textStyle="italic"
-                    android:alpha="0.85" />
+                    android:alpha="0.8" />
 
             </LinearLayout>
         </ScrollView>
 
-        <!-- ================= TAB 2: SONG LIBRARY ================= -->
+        <!-- ================= TAB 2: SONG LIBRARY & FOLDERS & THEMED ALBUMS ================= -->
         <LinearLayout
             android:id="@+id/layoutLibraryView"
             android:layout_width="match_parent"
@@ -442,20 +556,69 @@
             android:orientation="vertical"
             android:visibility="gone">
 
-            <!-- Search Bar -->
+            <!-- Sub Navigation Tabs (Tất cả · Thư mục · Album chủ đề) -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="46dp"
-                android:layout_marginHorizontal="18dp"
-                android:layout_marginVertical="10dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="6dp">
+
+                <TextView
+                    android:id="@+id/btnSubTabAll"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_tab_active"
+                    android:gravity="center"
+                    android:text="🎵 Tất cả"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/btnSubTabFolders"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_tab_inactive"
+                    android:gravity="center"
+                    android:text="📁 Thư mục"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/btnSubTabAlbums"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_tab_inactive"
+                    android:gravity="center"
+                    android:text="💽 Album chủ đề"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Search Bar (Visible across views) -->
+            <LinearLayout
+                android:id="@+id/layoutSearchBar"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginVertical="6dp"
                 android:background="@drawable/bg_pill_search"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingHorizontal="14dp">
+                android:paddingHorizontal="12dp">
 
                 <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
                     android:src="@drawable/ic_search"
                     android:tint="@color/accent_gold" />
 
@@ -472,7 +635,18 @@
                     android:maxLines="1"
                     android:textColor="@color/text_primary"
                     android:textColorHint="@color/text_muted"
-                    android:textSize="14sp" />
+                    android:textSize="13sp" />
+
+                <ImageView
+                    android:id="@+id/btnSearchClear"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_close"
+                    android:tint="@color/text_muted"
+                    android:visibility="gone" />
 
                 <ImageView
                     android:id="@+id/btnRefresh"
@@ -484,84 +658,368 @@
                     android:tint="@color/accent_gold" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/tvSongCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="20dp"
-                android:layout_marginBottom="6dp"
-                android:text="0 khúc nhạc"
-                android:textColor="@color/accent_gold"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <!-- Song List / Empty State -->
+            <!-- Sub-view Container -->
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1">
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvSongs"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:clipToPadding="false"
-                    android:paddingBottom="80dp"
-                    android:scrollbars="vertical" />
-
+                <!-- 1. All Songs View -->
                 <LinearLayout
-                    android:id="@+id/layoutEmptyState"
+                    android:id="@+id/layoutAllSongsContainer"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="32dp"
-                    android:visibility="gone">
-
-                    <ImageView
-                        android:layout_width="72dp"
-                        android:layout_height="72dp"
-                        android:alpha="0.8"
-                        android:src="@drawable/ic_katana"
-                        android:tint="@color/primary_accent" />
+                    android:visibility="visible">
 
                     <TextView
-                        android:id="@+id/tvEmptyTitle"
+                        android:id="@+id/tvSongCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:text="@string/no_songs_found"
-                        android:textColor="@color/text_primary"
-                        android:textSize="18sp"
+                        android:layout_marginHorizontal="18dp"
+                        android:layout_marginBottom="4dp"
+                        android:text="0 khúc nhạc"
+                        android:textColor="@color/accent_gold"
+                        android:textSize="12sp"
                         android:textStyle="bold" />
 
-                    <TextView
-                        android:id="@+id/tvEmptyMessage"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:gravity="center"
-                        android:text="@string/permission_required"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp" />
+                    <!-- Song List / Empty State -->
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnGrantPermission"
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvSongs"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:clipToPadding="false"
+                            android:paddingBottom="80dp"
+                            android:scrollbars="vertical" />
+
+                        <LinearLayout
+                            android:id="@+id/layoutEmptyState"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="32dp"
+                            android:visibility="gone">
+
+                            <ImageView
+                                android:layout_width="64dp"
+                                android:layout_height="64dp"
+                                android:alpha="0.8"
+                                android:src="@drawable/ic_katana"
+                                android:tint="@color/primary_accent" />
+
+                            <TextView
+                                android:id="@+id/tvEmptyTitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="16dp"
+                                android:text="@string/no_songs_found"
+                                android:textColor="@color/text_primary"
+                                android:textSize="17sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvEmptyMessage"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:gravity="center"
+                                android:text="@string/permission_required"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="13sp" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnGrantPermission"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="16dp"
+                                android:backgroundTint="@color/primary_accent"
+                                android:text="@string/grant_permission"
+                                android:textColor="@color/white"
+                                app:cornerRadius="20dp" />
+                        </LinearLayout>
+                    </FrameLayout>
+                </LinearLayout>
+
+                <!-- 2. Device Folders View -->
+                <LinearLayout
+                    android:id="@+id/layoutFoldersContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <!-- Root Folder Header -->
+                    <TextView
+                        android:id="@+id/tvFoldersCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="18dp"
-                        android:backgroundTint="@color/primary_accent"
-                        android:text="@string/grant_permission"
-                        android:textColor="@color/white"
-                        app:cornerRadius="20dp" />
+                        android:layout_marginHorizontal="18dp"
+                        android:layout_marginBottom="4dp"
+                        android:text="0 thư mục chứa nhạc"
+                        android:textColor="@color/accent_gold"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <!-- Folder Detail Header (Shown when inside a folder) -->
+                    <LinearLayout
+                        android:id="@+id/layoutFolderDetailHeader"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"
+                        android:background="@color/surface_card"
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:id="@+id/btnFolderBack"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_arrow_back"
+                            android:tint="@color/text_primary" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvCurrentFolderName"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_primary"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:singleLine="true"
+                                android:text="Tên Thư Mục" />
+
+                            <TextView
+                                android:id="@+id/tvCurrentFolderPath"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/accent_gold"
+                                android:textSize="11sp"
+                                android:singleLine="true"
+                                android:ellipsize="middle"
+                                android:text="0 khúc nhạc" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:id="@+id/btnPlayFolderAll"
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_play"
+                            android:tint="@color/primary_accent" />
+                    </LinearLayout>
+
+                    <!-- Folders List -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvFolders"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:clipToPadding="false"
+                        android:paddingBottom="80dp"
+                        android:visibility="visible" />
+
+                    <!-- Folder Songs List (when viewing folder content) -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvFolderSongs"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:clipToPadding="false"
+                        android:paddingBottom="80dp"
+                        android:visibility="gone" />
                 </LinearLayout>
+
+                <!-- 3. Themed Albums View -->
+                <LinearLayout
+                    android:id="@+id/layoutAlbumsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <!-- Button: + Tạo Album Chủ Đề Mới (Top Action) -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btnCreateAlbumTop"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="16dp"
+                        android:layout_marginVertical="6dp"
+                        app:cardBackgroundColor="@color/surface_card"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="2dp"
+                        app:strokeColor="@color/accent_gold"
+                        app:strokeWidth="1dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="16dp"
+                            android:paddingVertical="12dp">
+
+                            <FrameLayout
+                                android:layout_width="44dp"
+                                android:layout_height="44dp">
+
+                                <View
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:background="@drawable/bg_pill_search" />
+
+                                <ImageView
+                                    android:layout_width="22dp"
+                                    android:layout_height="22dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_add"
+                                    android:tint="@color/accent_gold" />
+                            </FrameLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="14dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="+ Tạo Album Chủ Đề Mới"
+                                    android:textColor="@color/accent_gold"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="Tập hợp các khúc nhạc theo cảm xúc &amp; gu nghe"
+                                    android:textColor="@color/text_muted"
+                                    android:textSize="11sp" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Album Detail Header (when viewing inside an album) -->
+                    <LinearLayout
+                        android:id="@+id/layoutAlbumDetailHeader"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"
+                        android:background="@color/surface_card"
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:id="@+id/btnAlbumBack"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_arrow_back"
+                            android:tint="@color/text_primary" />
+
+                        <TextView
+                            android:id="@+id/tvCurrentAlbumEmoji"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:textSize="20sp"
+                            android:text="⚔️" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvCurrentAlbumTitle"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_primary"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:singleLine="true"
+                                android:text="Tên Album Chủ Đề" />
+
+                            <TextView
+                                android:id="@+id/tvCurrentAlbumCount"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/accent_gold"
+                                android:textSize="11sp"
+                                android:singleLine="true"
+                                android:text="0 khúc nhạc" />
+                        </LinearLayout>
+
+                        <!-- Add Songs to Album -->
+                        <ImageView
+                            android:id="@+id/btnAddSongsToAlbum"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:layout_marginEnd="4dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_playlist_add"
+                            android:tint="@color/accent_gold" />
+
+                        <!-- Play Album Action Button -->
+                        <ImageView
+                            android:id="@+id/btnPlayAlbumAll"
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_play"
+                            android:tint="@color/primary_accent" />
+                    </LinearLayout>
+
+                    <!-- Themed Albums List -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvAlbums"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:clipToPadding="false"
+                        android:paddingBottom="80dp"
+                        android:visibility="visible" />
+
+                    <!-- Album Songs List (when viewing album content) -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvAlbumSongs"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:clipToPadding="false"
+                        android:paddingBottom="80dp"
+                        android:visibility="gone" />
+                </LinearLayout>
+
             </FrameLayout>
 
             <!-- Bottom Mini Player (Visible when browsing Library) -->
             <LinearLayout
                 android:id="@+id/miniPlayerLayout"
                 android:layout_width="match_parent"
-                android:layout_height="64dp"
+                android:layout_height="62dp"
                 android:layout_marginHorizontal="12dp"
                 android:layout_marginBottom="10dp"
                 android:background="@drawable/bg_mini_player"
@@ -574,8 +1032,8 @@
                 android:visibility="gone">
 
                 <FrameLayout
-                    android:layout_width="42dp"
-                    android:layout_height="42dp">
+                    android:layout_width="40dp"
+                    android:layout_height="40dp">
 
                     <ImageView
                         android:layout_width="match_parent"
@@ -612,7 +1070,7 @@
                         android:maxLines="1"
                         android:text="Kiếm khách"
                         android:textColor="@color/accent_gold"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
                 </LinearLayout>
 
                 <ImageView

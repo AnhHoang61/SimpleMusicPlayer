@@ -114,9 +114,13 @@ public final class MusicLoader {
                         }
                     }
 
-                    // Special rule: Name 59-minute track / WhatsApp voice note "Thủy Chung"
-                    if ((displayName != null && displayName.contains("Thủy Chung"))
-                            || (duration >= 3500000 && duration <= 3650000)
+                    // Remove technical bracket artifacts if title has trailing artist brackets (e.g. "Nhạc Uống Trà ... [] Tris")
+                    if (title != null && title.contains("[]")) {
+                        title = title.replaceAll("\\[\\s*\\][^\\[\\]]*$", "").trim();
+                    }
+
+                    // Special rule: Name specific WhatsApp voice note "Thủy Chung" (strictly by display name or WhatsApp ID)
+                    if ((displayName != null && displayName.equalsIgnoreCase("Thủy Chung.mp3"))
                             || (title != null && title.contains("AUD-20261110-WA0000"))) {
                         title = "Thủy Chung";
                     }
@@ -132,45 +136,15 @@ public final class MusicLoader {
             }
         }
 
-        // Also include any songs in app-specific music dir if any
+        // Supplemental check: Ensure any songs in public V-Music sync directory or private music directory are loaded
         try {
+            File publicVMusicDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "V-Music");
+            scanAdditionalFolder(context, publicVMusicDir, songList);
+
             File appMusicDir = context.getExternalFilesDir(Environment.DIRECTORY_MUSIC);
-            if (appMusicDir != null && appMusicDir.exists()) {
-                File[] files = appMusicDir.listFiles();
-                if (files != null) {
-                    for (File f : files) {
-                        String name = f.getName().toLowerCase();
-                        if (name.endsWith(".mp3") || name.endsWith(".m4a") || name.endsWith(".wav") || name.endsWith(".flac")) {
-                            boolean exists = false;
-                            for (Song s : songList) {
-                                if (s.getPath() != null && s.getPath().equals(f.getAbsolutePath())) {
-                                    exists = true;
-                                    break;
-                                }
-                            }
-                            if (!exists) {
-                                String cleanTitle = f.getName().replaceFirst("[.][^.]+$", "");
-                                long duration = 180000;
-                                String artist = "V-Music Sync";
-                                try {
-                                    android.media.MediaMetadataRetriever mmr = new android.media.MediaMetadataRetriever();
-                                    mmr.setDataSource(f.getAbsolutePath());
-                                    String durStr = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
-                                    if (durStr != null) duration = Long.parseLong(durStr);
-                                    String metaArtist = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST);
-                                    if (metaArtist != null && !metaArtist.trim().isEmpty()) artist = metaArtist.trim();
-                                    String metaTitle = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE);
-                                    if (metaTitle != null && !metaTitle.trim().isEmpty()) cleanTitle = metaTitle.trim();
-                                    mmr.release();
-                                } catch (Exception ignored) {}
-                                songList.add(new Song(-Math.abs(f.hashCode()), cleanTitle, artist, duration, f.getAbsolutePath(), -1));
-                            }
-                        }
-                    }
-                }
-            }
+            scanAdditionalFolder(context, appMusicDir, songList);
         } catch (Exception e) {
-            Log.w(TAG, "Failed to scan app private music dir", e);
+            Log.w(TAG, "Failed to scan supplemental music dirs", e);
         }
 
         // Sort songs alphabetically with Vietnamese collator support
@@ -184,5 +158,53 @@ public final class MusicLoader {
         }
 
         return songList;
+    }
+
+    private static void scanAdditionalFolder(Context context, File dir, List<Song> songList) {
+        if (dir == null || !dir.exists() || !dir.isDirectory()) return;
+        File[] files = dir.listFiles();
+        if (files == null) return;
+
+        for (File f : files) {
+            if (!f.isFile()) continue;
+            String name = f.getName().toLowerCase();
+            if (name.endsWith(".mp3") || name.endsWith(".m4a") || name.endsWith(".wav")
+                    || name.endsWith(".flac") || name.endsWith(".ogg") || name.endsWith(".aac")) {
+                boolean exists = false;
+                for (Song s : songList) {
+                    if (s.getPath() != null && s.getPath().equalsIgnoreCase(f.getAbsolutePath())) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    String cleanTitle = f.getName().replaceFirst("[.][^.]+$", "");
+                    long duration = 180000;
+                    String artist = "V-Music Sync";
+                    try {
+                        android.media.MediaMetadataRetriever mmr = new android.media.MediaMetadataRetriever();
+                        mmr.setDataSource(f.getAbsolutePath());
+                        String durStr = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
+                        if (durStr != null) duration = Long.parseLong(durStr);
+                        String metaArtist = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST);
+                        if (metaArtist != null && !metaArtist.trim().isEmpty() && !metaArtist.equalsIgnoreCase("<unknown>")) {
+                            artist = metaArtist.trim();
+                        }
+                        String metaTitle = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE);
+                        if (metaTitle != null && !metaTitle.trim().isEmpty() && !metaTitle.equalsIgnoreCase("<unknown>")) {
+                            cleanTitle = metaTitle.trim();
+                        }
+                        mmr.release();
+                    } catch (Exception ignored) {}
+
+                    // Request MediaStore scan so Android system indexes it in background
+                    try {
+                        android.media.MediaScannerConnection.scanFile(context, new String[]{f.getAbsolutePath()}, null, null);
+                    } catch (Exception ignored) {}
+
+                    songList.add(new Song(-Math.abs(f.getAbsolutePath().hashCode()), cleanTitle, artist, duration, f.getAbsolutePath(), -1));
+                }
+            }
+        }
     }
 }

@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -22,7 +23,8 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * RecyclerView adapter for displaying the list of songs with live search filtering.
+ * RecyclerView adapter for displaying the list of songs with live search filtering,
+ * item selection highlighting, and 3-dot options menu for Rename, Delete, and Themed Albums.
  */
 public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.SongViewHolder> implements Filterable {
 
@@ -30,10 +32,20 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.SongViewHold
         void onSongClick(Song song, int originalIndex);
     }
 
+    public interface OnSongOptionsClickListener {
+        void onSongOptionsClick(Song song, View anchorView);
+    }
+
+    public interface OnFilterResultsListener {
+        void onFilterResults(int count, boolean isFiltering);
+    }
+
     private final Context context;
     private final List<Song> fullSongList;
     private final List<Song> displayedSongList;
     private final OnSongClickListener clickListener;
+    private OnSongOptionsClickListener optionsListener;
+    private OnFilterResultsListener filterResultsListener;
     private long currentPlayingSongId = -1;
 
     public MusicAdapter(Context context, List<Song> songs, OnSongClickListener listener) {
@@ -43,6 +55,14 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.SongViewHold
         this.clickListener = listener;
     }
 
+    public void setOnSongOptionsClickListener(@Nullable OnSongOptionsClickListener listener) {
+        this.optionsListener = listener;
+    }
+
+    public void setOnFilterResultsListener(@Nullable OnFilterResultsListener listener) {
+        this.filterResultsListener = listener;
+    }
+
     public void updateData(List<Song> songs) {
         this.fullSongList.clear();
         if (songs != null) {
@@ -50,6 +70,30 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.SongViewHold
         }
         this.displayedSongList.clear();
         this.displayedSongList.addAll(this.fullSongList);
+        notifyDataSetChanged();
+    }
+
+    public void updateSong(Song song) {
+        if (song == null) return;
+        for (int i = 0; i < fullSongList.size(); i++) {
+            if (fullSongList.get(i).getId() == song.getId()) {
+                fullSongList.set(i, song);
+                break;
+            }
+        }
+        for (int i = 0; i < displayedSongList.size(); i++) {
+            if (displayedSongList.get(i).getId() == song.getId()) {
+                displayedSongList.set(i, song);
+                notifyItemChanged(i);
+                break;
+            }
+        }
+    }
+
+    public void removeSong(Song song) {
+        if (song == null) return;
+        fullSongList.removeIf(s -> s.getId() == song.getId());
+        displayedSongList.removeIf(s -> s.getId() == song.getId());
         notifyDataSetChanged();
     }
 
@@ -91,11 +135,28 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.SongViewHold
                 clickListener.onSongClick(song, origIdx >= 0 ? origIdx : position);
             }
         });
+
+        holder.btnOptions.setOnClickListener(v -> {
+            if (optionsListener != null) {
+                optionsListener.onSongOptionsClick(song, v);
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
         return displayedSongList.size();
+    }
+
+    /**
+     * Strips Vietnamese accents/diacritics and converts to lowercase for forgiving search.
+     */
+    public static String normalizeSearchText(String str) {
+        if (str == null) return "";
+        String nfd = java.text.Normalizer.normalize(str, java.text.Normalizer.Form.NFD);
+        String unaccented = java.util.regex.Pattern.compile("\\p{InCombiningDiacriticalMarks}+").matcher(nfd).replaceAll("");
+        unaccented = unaccented.replace('đ', 'd').replace('Đ', 'D');
+        return unaccented.toLowerCase(Locale.getDefault()).trim();
     }
 
     @Override
@@ -107,10 +168,17 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.SongViewHold
                 if (constraint == null || constraint.length() == 0) {
                     filtered.addAll(fullSongList);
                 } else {
-                    String query = constraint.toString().toLowerCase(Locale.getDefault()).trim();
+                    String queryRaw = constraint.toString().toLowerCase(Locale.getDefault()).trim();
+                    String queryNorm = normalizeSearchText(constraint.toString());
+
                     for (Song song : fullSongList) {
-                        if (song.getTitle().toLowerCase(Locale.getDefault()).contains(query)
-                                || song.getArtist().toLowerCase(Locale.getDefault()).contains(query)) {
+                        String titleRaw = song.getTitle().toLowerCase(Locale.getDefault());
+                        String artistRaw = song.getArtist().toLowerCase(Locale.getDefault());
+                        String titleNorm = normalizeSearchText(song.getTitle());
+                        String artistNorm = normalizeSearchText(song.getArtist());
+
+                        if (titleRaw.contains(queryRaw) || artistRaw.contains(queryRaw)
+                                || titleNorm.contains(queryNorm) || artistNorm.contains(queryNorm)) {
                             filtered.add(song);
                         }
                     }
@@ -129,6 +197,9 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.SongViewHold
                     displayedSongList.addAll((List<Song>) results.values);
                 }
                 notifyDataSetChanged();
+                if (filterResultsListener != null) {
+                    filterResultsListener.onFilterResults(displayedSongList.size(), constraint != null && constraint.length() > 0);
+                }
             }
         };
     }
@@ -138,6 +209,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.SongViewHold
         final TextView tvArtist;
         final TextView tvDuration;
         final ImageView ivIcon;
+        final ImageView btnOptions;
 
         SongViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -145,6 +217,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.SongViewHold
             tvArtist = itemView.findViewById(R.id.tvSongArtist);
             tvDuration = itemView.findViewById(R.id.tvSongDuration);
             ivIcon = itemView.findViewById(R.id.ivSongIcon);
+            btnOptions = itemView.findViewById(R.id.btnSongOptions);
         }
     }
 }

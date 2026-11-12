@@ -263,6 +263,7 @@ public class SyncManager {
                 if (songsToDownload.isEmpty()) {
                     updateStatus(SyncStatus.COMPLETED, "Toàn bộ nhạc trên máy tính đã được đồng bộ đầy đủ!");
                     isSyncInProgress = false;
+                    notifyCompleted(0);
                     return;
                 }
 
@@ -453,6 +454,15 @@ public class SyncManager {
                             values.clear();
                             values.put(MediaStore.Audio.Media.IS_PENDING, 0);
                             resolver.update(itemUri, values, null, null);
+
+                            // Immediately notify MediaScanner so system indexes tags & duration
+                            try {
+                                File pubFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "V-Music/" + filename);
+                                if (pubFile.exists()) {
+                                    MediaScannerConnection.scanFile(context, new String[]{pubFile.getAbsolutePath()}, null, null);
+                                }
+                            } catch (Exception ignored) {}
+
                             Log.d(TAG, "Successfully downloaded to MediaStore: " + filename);
                             return true;
                         }

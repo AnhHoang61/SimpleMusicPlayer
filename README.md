@@ -13,10 +13,20 @@
 - **Tự động quét nhạc trên thiết bị:** Quét và lọc thông minh toàn bộ file âm thanh (`.mp3`, `.m4a`, `.wav`...) trong bộ nhớ máy và thẻ nhớ, tự động loại bỏ các đoạn âm thanh chuông báo ngắn dưới 5 giây.
 - **Tìm kiếm tức thì (Instant Search):** Lọc bài hát theo tên hoặc ca sĩ ngay khi nhập liệu.
 - **Thanh Mini Player:** Thu gọn ở cạnh đáy màn hình để thao tác nhanh Play/Pause và chuyển bài khi đang duyệt danh sách.
-- **Màn hình Full Player (Bottom Sheet):**
-  - Hiệu ứng đĩa than (Vinyl Disc) xoay mượt mà khi phát nhạc và tự động dừng khi tạm dừng.
-  - Thanh tua nhạc (SeekBar) kéo đến bất kỳ mốc thời gian nào của bài hát.
+- **Màn hình Full Player (Samurai Katana Edition):**
+  - Hiệu ứng đĩa Tsuba xoay mượt mà khi phát nhạc và tự động dừng khi tạm dừng.
+  - Thanh tua nhạc lưỡi kiếm Katana (SeekBar) với chuôi kiếm (Tsuka) và mũi kiếm (Kissaki).
   - Chế độ **Phát ngẫu nhiên (Shuffle)** và **Lặp lại (Repeat One / Repeat All)**.
+  - **Thanh công cụ nhanh (Quick Actions Toolbar):** Lấp đầy khoảng trống cạnh dưới với các phím bấm tiện ích: Yêu thích (❤️), Thêm vào Album chủ đề (➕), Đổi tên (✏️), Xóa nhạc (🗑️), và xem hàng đợi (📋).
+  - Huy hiệu nguồn phát (Source Badge) hiển thị rõ đang phát từ Album chủ đề, Thư mục hay Tất cả.
+- **Quản lý Thư mục & Đổi tên, Xóa nhạc:**
+  - **Duyệt theo Thư mục máy:** Nhóm các bài hát theo thư mục thực tế trên bộ nhớ máy (Music, Download, V-Music...), cho phép mở xem và phát toàn bộ thư mục với 1 chạm.
+  - **Đổi tên khúc nhạc (Rename):** Đổi tên bài hát ngay trong ứng dụng, lưu trữ lâu dài và tự động cập nhật trên toàn bộ danh sách, thông báo và widget.
+  - **Xóa bài hát an toàn (Delete):** Xóa khỏi Album chủ đề hoặc xóa vĩnh viễn khỏi thiết bị với hộp thoại xác nhận an toàn.
+- **Tạo Album theo chủ đề (Themed Albums):**
+  - Tự do tạo các Album đặt tên theo chủ đề, cảm xúc hoặc thời điểm nghe nhạc (ví dụ: *⚔️ Samurai Kiếm Đạo*, *🌙 Nhạc Đêm Khuya*, *🔥 Động Lực & Luyện Tập*, *☕ Acoustic & Thư Giãn*...).
+  - Tùy chọn biểu tượng Emoji trực quan cho từng chủ đề.
+  - Thêm, bớt bài hát dễ dàng và phát toàn bộ album chỉ với 1 chạm.
 - **Phát nhạc chạy ngầm (Foreground Service):**
   - Tiếp tục phát nhạc mượt mà ngay cả khi tắt màn hình, khóa máy hoặc sử dụng ứng dụng khác.
   - Thanh điều khiển trên Notification bar và màn hình khóa (Android 13+ & 14+ tương thích).
