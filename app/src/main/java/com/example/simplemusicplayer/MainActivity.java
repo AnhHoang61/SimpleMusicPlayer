@@ -15,6 +15,7 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
@@ -603,6 +604,25 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         folderGroupList.addAll(albumManager.groupSongsByFolder(songList));
         folderAdapter.updateData(folderGroupList);
         tvFoldersCount.setText(String.format(Locale.getDefault(), "%d thư mục chứa nhạc", folderGroupList.size()));
+
+        if (currentViewingFolder != null) {
+            ThemedAlbumManager.FolderGroup updatedGroup = null;
+            for (ThemedAlbumManager.FolderGroup g : folderGroupList) {
+                if (g.folderPath.equalsIgnoreCase(currentViewingFolder.folderPath)
+                        || g.folderName.equalsIgnoreCase(currentViewingFolder.folderName)) {
+                    updatedGroup = g;
+                    break;
+                }
+            }
+            if (updatedGroup != null) {
+                currentViewingFolder = updatedGroup;
+                tvCurrentFolderPath.setText(String.format(Locale.getDefault(), "%s · %d khúc nhạc", currentViewingFolder.folderPath, currentViewingFolder.getSongCount()));
+                folderSongsAdapter.updateData(currentViewingFolder.songs);
+                if (etSearch != null && etSearch.getText().length() > 0) {
+                    folderSongsAdapter.getFilter().filter(etSearch.getText());
+                }
+            }
+        }
     }
 
     // ==========================================
@@ -653,6 +673,15 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         albumList.clear();
         albumList.addAll(albumManager.getAlbums());
         themedAlbumAdapter.updateData(albumList);
+
+        if (currentViewingAlbum != null) {
+            List<Song> songsInAlbum = albumManager.getSongsInAlbum(currentViewingAlbum.getId(), songList);
+            tvCurrentAlbumCount.setText(String.format(Locale.getDefault(), "%d khúc nhạc", songsInAlbum.size()));
+            albumSongsAdapter.updateData(songsInAlbum);
+            if (etSearch != null && etSearch.getText().length() > 0) {
+                albumSongsAdapter.getFilter().filter(etSearch.getText());
+            }
+        }
     }
 
     // ==========================================
@@ -1154,20 +1183,56 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
     // Wi-Fi Auto-Sync Feature
     // ==========================================
 
+    private ObjectAnimator syncIconAnimator;
+
+    private void startSyncIconAnimation() {
+        if (btnOpenSync == null) return;
+        if (syncIconAnimator == null) {
+            syncIconAnimator = ObjectAnimator.ofFloat(btnOpenSync, "rotation", 0f, 360f);
+            syncIconAnimator.setDuration(1200);
+            syncIconAnimator.setRepeatCount(ObjectAnimator.INFINITE);
+            syncIconAnimator.setInterpolator(new LinearInterpolator());
+        }
+        if (!syncIconAnimator.isRunning()) {
+            syncIconAnimator.start();
+            btnOpenSync.setColorFilter(ContextCompat.getColor(this, R.color.primary_accent));
+        }
+    }
+
+    private void stopSyncIconAnimation() {
+        if (syncIconAnimator != null && syncIconAnimator.isRunning()) {
+            syncIconAnimator.cancel();
+            btnOpenSync.setRotation(0f);
+            btnOpenSync.setColorFilter(ContextCompat.getColor(this, R.color.accent_gold));
+        }
+    }
+
     private void setupSyncFeature() {
         SyncManager.getInstance().setupAutoSyncOnWifi(this);
+        SyncManager.getInstance().startRealtimeMonitoring(this);
         SyncManager.getInstance().addListener(new SyncManager.SyncListener() {
             @Override
-            public void onSyncStatusChanged(SyncManager.SyncStatus status, @Nullable String message) {}
+            public void onSyncStatusChanged(SyncManager.SyncStatus status, @Nullable String message) {
+                mainHandler.post(() -> {
+                    if (status == SyncManager.SyncStatus.DOWNLOADING) {
+                        startSyncIconAnimation();
+                    } else if (status == SyncManager.SyncStatus.COMPLETED || status == SyncManager.SyncStatus.ERROR || status == SyncManager.SyncStatus.IDLE) {
+                        stopSyncIconAnimation();
+                    }
+                });
+            }
 
             @Override
-            public void onSyncProgress(int current, int total, String songName) {}
+            public void onSyncProgress(int current, int total, String songName) {
+                mainHandler.post(() -> startSyncIconAnimation());
+            }
 
             @Override
             public void onSyncCompleted(int syncedCount) {
                 mainHandler.post(() -> {
+                    stopSyncIconAnimation();
                     if (syncedCount > 0) {
-                        Toast.makeText(MainActivity.this, "Đã đồng bộ thành công " + syncedCount + " khúc nhạc mới!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this, "Đã tự động đồng bộ " + syncedCount + " khúc nhạc mới từ máy tính!", Toast.LENGTH_LONG).show();
                     }
                     loadSongs();
                 });
@@ -1449,12 +1514,49 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         updateCurrentAudioOutput();
     }
 
+    private final Runnable fastSyncRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (SyncManager.getInstance().isAutoSyncEnabled(MainActivity.this)) {
+                SyncManager.getInstance().checkFastCatalogUpdate(MainActivity.this);
+            }
+            mainHandler.postDelayed(this, 6000);
+        }
+    };
+
+    private final android.content.BroadcastReceiver syncBroadcastReceiver = new android.content.BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent != null && "com.example.simplemusicplayer.ACTION_SYNC".equals(intent.getAction())) {
+                Log.i("MainActivity", "Received ACTION_SYNC broadcast, triggering sync!");
+                SyncManager.getInstance().startSync(MainActivity.this, false);
+            }
+        }
+    };
+
     @Override
     protected void onResume() {
         super.onResume();
+        SyncManager.getInstance().startRealtimeMonitoring(this);
         if (SyncManager.getInstance().isAutoSyncEnabled(this)) {
             SyncManager.getInstance().startSync(this, true);
         }
+        mainHandler.removeCallbacks(fastSyncRunnable);
+        mainHandler.postDelayed(fastSyncRunnable, 4000);
+
+        try {
+            android.content.IntentFilter filter = new android.content.IntentFilter("com.example.simplemusicplayer.ACTION_SYNC");
+            registerReceiver(syncBroadcastReceiver, filter);
+        } catch (Exception ignored) {}
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mainHandler.removeCallbacks(fastSyncRunnable);
+        try {
+            unregisterReceiver(syncBroadcastReceiver);
+        } catch (Exception ignored) {}
     }
 
     @Override

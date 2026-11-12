@@ -41,6 +41,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -94,6 +95,12 @@ public class SyncManager {
     private String currentStatusMessage = "Sẵn sàng đồng bộ";
     private boolean isSyncInProgress = false;
     private boolean isNetworkCallbackRegistered = false;
+
+    private volatile boolean isMonitoringActive = false;
+    private Thread sseThread = null;
+    private Thread udpListenerThread = null;
+    private volatile long lastKnownCatalogVersion = 0;
+    private volatile int lastKnownSongsCount = -1;
 
     private SyncManager() {}
 
@@ -149,11 +156,197 @@ public class SyncManager {
     }
 
     /**
+     * Starts continuous real-time monitoring: persistent SSE stream, UDP beacon listener,
+     * ensuring instant song download when PC files change without needing app restart.
+     */
+    public synchronized void startRealtimeMonitoring(Context context) {
+        if (context == null) return;
+        Context appContext = context.getApplicationContext();
+        if (!isMonitoringActive) {
+            isMonitoringActive = true;
+            startContinuousUdpListener(appContext);
+            startContinuousSseListener(appContext);
+            Log.i(TAG, "Real-time sync monitoring started (SSE + UDP).");
+        }
+    }
+
+    public synchronized void stopRealtimeMonitoring() {
+        isMonitoringActive = false;
+        if (sseThread != null) {
+            sseThread.interrupt();
+            sseThread = null;
+        }
+        if (udpListenerThread != null) {
+            udpListenerThread.interrupt();
+            udpListenerThread = null;
+        }
+    }
+
+    private void startContinuousUdpListener(Context appContext) {
+        if (udpListenerThread != null && udpListenerThread.isAlive()) return;
+
+        udpListenerThread = new Thread(() -> {
+            DatagramSocket socket = null;
+            WifiManager.MulticastLock multicastLock = null;
+            try {
+                WifiManager wm = (WifiManager) appContext.getSystemService(Context.WIFI_SERVICE);
+                if (wm != null) {
+                    multicastLock = wm.createMulticastLock("vmusic_udp_beacon_rx");
+                    multicastLock.setReferenceCounted(true);
+                    multicastLock.acquire();
+                }
+
+                socket = new DatagramSocket(null);
+                socket.setReuseAddress(true);
+                socket.setBroadcast(true);
+                socket.bind(new InetSocketAddress(UDP_DISCOVERY_PORT));
+
+                byte[] buffer = new byte[2048];
+                while (isMonitoringActive) {
+                    try {
+                        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                        socket.receive(packet);
+                        String msg = new String(packet.getData(), 0, packet.getLength(), StandardCharsets.UTF_8);
+                        String hostIp = packet.getAddress().getHostAddress();
+
+                        if (msg.contains("vmusic-sync") || msg.contains("vmusic-beacon")) {
+                            appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                                    .edit().putString(KEY_LAST_SERVER_IP, hostIp).apply();
+
+                            if (msg.contains("catalog_updated") || msg.contains("file_uploaded") || msg.contains("file_deleted")) {
+                                Log.i(TAG, "[Realtime UDP] Catalog updated on PC (" + hostIp + ")! Triggering sync...");
+                                startSync(appContext, true);
+                            }
+                        }
+                    } catch (Exception e) {
+                        if (!isMonitoringActive) break;
+                    }
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Continuous UDP listener ended: " + e.getMessage());
+            } finally {
+                if (socket != null && !socket.isClosed()) {
+                    try { socket.close(); } catch (Exception ignored) {}
+                }
+                if (multicastLock != null && multicastLock.isHeld()) {
+                    try { multicastLock.release(); } catch (Exception ignored) {}
+                }
+            }
+        }, "VMusic-UdpBeaconListener");
+        udpListenerThread.setDaemon(true);
+        udpListenerThread.start();
+    }
+
+    private void startContinuousSseListener(Context appContext) {
+        if (sseThread != null && sseThread.isAlive()) return;
+
+        sseThread = new Thread(() -> {
+            while (isMonitoringActive) {
+                String serverIp = getLastServerIp(appContext);
+                if (serverIp == null) {
+                    serverIp = discoverServerIp(appContext);
+                    if (serverIp != null) {
+                        appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                                .edit().putString(KEY_LAST_SERVER_IP, serverIp).apply();
+                    }
+                }
+
+                if (serverIp == null) {
+                    try { Thread.sleep(5000); } catch (InterruptedException e) { break; }
+                    continue;
+                }
+
+                HttpURLConnection conn = null;
+                BufferedReader reader = null;
+                try {
+                    URL url = new URL("http://" + serverIp + ":" + DEFAULT_HTTP_PORT + "/api/events");
+                    conn = (HttpURLConnection) url.openConnection();
+                    conn.setConnectTimeout(3000);
+                    conn.setReadTimeout(45000); // Server sends keepalive ping every 12s
+                    conn.setRequestProperty("Accept", "text/event-stream");
+
+                    if (conn.getResponseCode() == 200) {
+                        Log.i(TAG, "[Realtime SSE] Connected to event stream at " + serverIp);
+                        reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+                        String line;
+                        while (isMonitoringActive && (line = reader.readLine()) != null) {
+                            line = line.trim();
+                            if (line.startsWith("data:")) {
+                                String data = line.substring(5).trim();
+                                if (data.contains("catalog_updated") || data.contains("file_uploaded") || data.contains("file_deleted")) {
+                                    Log.i(TAG, "[Realtime SSE] Immediate sync triggered by PC file event!");
+                                    startSync(appContext, true);
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.d(TAG, "[Realtime SSE] Stream cycle: " + e.getMessage());
+                } finally {
+                    if (reader != null) try { reader.close(); } catch (Exception ignored) {}
+                    if (conn != null) try { conn.disconnect(); } catch (Exception ignored) {}
+                }
+
+                try { Thread.sleep(3000); } catch (InterruptedException e) { break; }
+            }
+        }, "VMusic-SSEClient");
+        sseThread.setDaemon(true);
+        sseThread.start();
+    }
+
+    /**
+     * Ultra-fast non-blocking catalog version check (runs on periodic timer when app is foreground).
+     */
+    public void checkFastCatalogUpdate(Context context) {
+        if (isSyncInProgress || context == null) return;
+        Context appContext = context.getApplicationContext();
+
+        executor.execute(() -> {
+            if (isSyncInProgress) return;
+            String serverIp = getLastServerIp(appContext);
+            if (serverIp == null) return;
+
+            try {
+                URL url = new URL("http://" + serverIp + ":" + DEFAULT_HTTP_PORT + "/api/version");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setConnectTimeout(1200);
+                conn.setReadTimeout(1200);
+                conn.setRequestMethod("GET");
+
+                if (conn.getResponseCode() == 200) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) sb.append(line);
+                    reader.close();
+
+                    JSONObject json = new JSONObject(sb.toString());
+                    long version = json.optLong("version", 0);
+                    int count = json.optInt("count", -1);
+
+                    if (lastKnownCatalogVersion != 0 && (version != lastKnownCatalogVersion || (lastKnownSongsCount != -1 && count != lastKnownSongsCount))) {
+                        Log.i(TAG, "[Fast Check] Version mismatch (ver=" + version + ", count=" + count + ") -> Triggering auto-sync!");
+                        lastKnownCatalogVersion = version;
+                        lastKnownSongsCount = count;
+                        startSync(appContext, true);
+                    } else {
+                        lastKnownCatalogVersion = version;
+                        lastKnownSongsCount = count;
+                    }
+                }
+                conn.disconnect();
+            } catch (Exception ignored) {}
+        });
+    }
+
+    /**
      * Registers Wi-Fi network listener to trigger auto-sync whenever the phone joins Wi-Fi.
      */
     public void setupAutoSyncOnWifi(Context context) {
         if (isNetworkCallbackRegistered || context == null) return;
         Context appContext = context.getApplicationContext();
+
+        startRealtimeMonitoring(appContext);
 
         try {
             ConnectivityManager cm = (ConnectivityManager) appContext.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -166,11 +359,12 @@ public class SyncManager {
                     @Override
                     public void onAvailable(@NonNull Network network) {
                         Log.d(TAG, "Wi-Fi connected! Checking auto-sync...");
+                        startRealtimeMonitoring(appContext);
                         mainHandler.postDelayed(() -> {
                             if (isAutoSyncEnabled(appContext)) {
                                 startSync(appContext, true);
                             }
-                        }, 3000);
+                        }, 1500);
                     }
                 });
                 isNetworkCallbackRegistered = true;
@@ -207,16 +401,14 @@ public class SyncManager {
                     multicastLock.acquire();
                 }
 
-                // 1. Discover PC server via UDP
-                String serverIp = discoverServerIp(appContext);
+                // 1. Fast resolve PC server IP (check last known IP first, then UDP discovery)
                 int serverPort = DEFAULT_HTTP_PORT;
-
-                if (serverIp == null) {
-                    // Try fallback to last known IP
-                    String lastIp = getLastServerIp(appContext);
-                    if (lastIp != null && testHttpConnection(lastIp, serverPort)) {
-                        serverIp = lastIp;
-                    }
+                String serverIp = null;
+                String lastIp = getLastServerIp(appContext);
+                if (lastIp != null && testHttpConnection(lastIp, serverPort)) {
+                    serverIp = lastIp;
+                } else {
+                    serverIp = discoverServerIp(appContext);
                 }
 
                 if (serverIp == null) {
