@@ -61,11 +61,17 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.FolderView
         holder.tvDetail.setText(String.format(Locale.getDefault(), "%s · %d khúc nhạc", group.folderPath, group.getSongCount()));
 
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) listener.onFolderClick(group);
+            v.animate().scaleX(0.97f).scaleY(0.97f).setDuration(70).withEndAction(() -> {
+                v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                if (listener != null) listener.onFolderClick(group);
+            }).start();
         });
 
         holder.btnPlay.setOnClickListener(v -> {
-            if (listener != null) listener.onPlayFolder(group);
+            v.animate().scaleX(0.85f).scaleY(0.85f).setDuration(70).withEndAction(() -> {
+                v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                if (listener != null) listener.onPlayFolder(group);
+            }).start();
         });
     }
 

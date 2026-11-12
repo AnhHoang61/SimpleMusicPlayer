@@ -18,7 +18,10 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
+import android.view.animation.OvershootInterpolator;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -73,7 +76,11 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
 
     // Full Samurai Player components (Main Screen)
     private ImageView viewVinylDisc;
+    private View viewTsubaGlow;
     private ObjectAnimator discAnimator;
+    private ObjectAnimator tsubaGlowScaleXAnimator;
+    private ObjectAnimator tsubaGlowScaleYAnimator;
+    private ObjectAnimator tsubaGlowAlphaAnimator;
     private TextView tvPlayerBadge, tvPlayerSourceBadge;
     private TextView tvSheetTitle, tvSheetArtist, tvCurrentTime, tvTotalTime;
     private SeekBar seekBarPlayer;
@@ -193,6 +200,7 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
 
         // Player elements
         viewVinylDisc = findViewById(R.id.viewVinylDisc);
+        viewTsubaGlow = findViewById(R.id.viewTsubaGlow);
         tvPlayerBadge = findViewById(R.id.tvPlayerBadge);
         tvPlayerSourceBadge = findViewById(R.id.tvPlayerSourceBadge);
         tvSheetTitle = findViewById(R.id.tvSheetTitle);
@@ -271,6 +279,110 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         discAnimator.setDuration(12000);
         discAnimator.setRepeatCount(ObjectAnimator.INFINITE);
         discAnimator.setInterpolator(new LinearInterpolator());
+
+        setupTsubaGlowAnimation();
+    }
+
+    private void setupTsubaGlowAnimation() {
+        if (viewTsubaGlow == null) return;
+        viewTsubaGlow.setAlpha(0.35f);
+
+        tsubaGlowScaleXAnimator = ObjectAnimator.ofFloat(viewTsubaGlow, "scaleX", 0.94f, 1.06f);
+        tsubaGlowScaleXAnimator.setDuration(1800);
+        tsubaGlowScaleXAnimator.setRepeatCount(ObjectAnimator.INFINITE);
+        tsubaGlowScaleXAnimator.setRepeatMode(ObjectAnimator.REVERSE);
+        tsubaGlowScaleXAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+
+        tsubaGlowScaleYAnimator = ObjectAnimator.ofFloat(viewTsubaGlow, "scaleY", 0.94f, 1.06f);
+        tsubaGlowScaleYAnimator.setDuration(1800);
+        tsubaGlowScaleYAnimator.setRepeatCount(ObjectAnimator.INFINITE);
+        tsubaGlowScaleYAnimator.setRepeatMode(ObjectAnimator.REVERSE);
+        tsubaGlowScaleYAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+
+        tsubaGlowAlphaAnimator = ObjectAnimator.ofFloat(viewTsubaGlow, "alpha", 0.35f, 0.85f);
+        tsubaGlowAlphaAnimator.setDuration(1800);
+        tsubaGlowAlphaAnimator.setRepeatCount(ObjectAnimator.INFINITE);
+        tsubaGlowAlphaAnimator.setRepeatMode(ObjectAnimator.REVERSE);
+        tsubaGlowAlphaAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+    }
+
+    private void startTsubaGlow() {
+        if (tsubaGlowScaleXAnimator != null && !tsubaGlowScaleXAnimator.isRunning()) {
+            tsubaGlowScaleXAnimator.start();
+            tsubaGlowScaleYAnimator.start();
+            tsubaGlowAlphaAnimator.start();
+        }
+    }
+
+    private void pauseTsubaGlow() {
+        if (tsubaGlowScaleXAnimator != null && tsubaGlowScaleXAnimator.isRunning()) {
+            tsubaGlowScaleXAnimator.pause();
+            tsubaGlowScaleYAnimator.pause();
+            tsubaGlowAlphaAnimator.pause();
+            if (viewTsubaGlow != null) {
+                viewTsubaGlow.animate().alpha(0.25f).scaleX(1.0f).scaleY(1.0f).setDuration(400).start();
+            }
+        }
+    }
+
+    private void animateBounceView(View view, Runnable onEndAction) {
+        if (view == null) return;
+        view.animate()
+                .scaleX(0.85f)
+                .scaleY(0.85f)
+                .setDuration(90)
+                .setInterpolator(new DecelerateInterpolator())
+                .withEndAction(() -> {
+                    view.animate()
+                            .scaleX(1.0f)
+                            .scaleY(1.0f)
+                            .setDuration(180)
+                            .setInterpolator(new OvershootInterpolator(2.2f))
+                            .withEndAction(onEndAction != null ? onEndAction : () -> {})
+                            .start();
+                })
+                .start();
+    }
+
+    private void animateSlideNudge(View view, float translationX, Runnable onEndAction) {
+        if (view == null) return;
+        view.animate()
+                .translationX(translationX)
+                .scaleX(0.9f)
+                .scaleY(0.9f)
+                .setDuration(80)
+                .withEndAction(() -> {
+                    view.animate()
+                            .translationX(0f)
+                            .scaleX(1.0f)
+                            .scaleY(1.0f)
+                            .setDuration(180)
+                            .setInterpolator(new OvershootInterpolator(2.0f))
+                            .withEndAction(onEndAction != null ? onEndAction : () -> {})
+                            .start();
+                })
+                .start();
+    }
+
+    private void animateFavoriteHeart(ImageView btn, boolean isFavorite) {
+        if (btn == null) return;
+        btn.animate()
+                .scaleX(0.6f)
+                .scaleY(0.6f)
+                .setDuration(90)
+                .withEndAction(() -> {
+                    btn.setImageResource(isFavorite ? R.drawable.ic_favorite : R.drawable.ic_favorite_border);
+                    btn.animate()
+                            .scaleX(1.35f)
+                            .scaleY(1.35f)
+                            .setDuration(160)
+                            .setInterpolator(new OvershootInterpolator(3.0f))
+                            .withEndAction(() -> {
+                                btn.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                            })
+                            .start();
+                })
+                .start();
     }
 
     // ==========================================
@@ -312,19 +424,63 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
 
     private void switchTab(boolean showPlayer) {
         if (showPlayer) {
+            if (layoutPlayerView.getVisibility() == View.VISIBLE) return;
+
+            layoutPlayerView.setAlpha(0f);
+            layoutPlayerView.setTranslationY(40f);
             layoutPlayerView.setVisibility(View.VISIBLE);
-            layoutLibraryView.setVisibility(View.GONE);
+            layoutPlayerView.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(240)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .start();
+
+            layoutLibraryView.animate()
+                    .alpha(0f)
+                    .setDuration(160)
+                    .withEndAction(() -> layoutLibraryView.setVisibility(View.GONE))
+                    .start();
+
             btnTabPlayer.setBackgroundResource(R.drawable.bg_tab_active);
             btnTabPlayer.setTextColor(ContextCompat.getColor(this, R.color.white));
             btnTabLibrary.setBackgroundResource(R.drawable.bg_tab_inactive);
             btnTabLibrary.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
         } else {
-            layoutPlayerView.setVisibility(View.GONE);
+            if (layoutLibraryView.getVisibility() == View.VISIBLE) return;
+
+            layoutLibraryView.setAlpha(0f);
+            layoutLibraryView.setTranslationY(40f);
             layoutLibraryView.setVisibility(View.VISIBLE);
+            layoutLibraryView.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(240)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .start();
+
+            layoutPlayerView.animate()
+                    .alpha(0f)
+                    .setDuration(160)
+                    .withEndAction(() -> layoutPlayerView.setVisibility(View.GONE))
+                    .start();
+
             btnTabLibrary.setBackgroundResource(R.drawable.bg_tab_active);
             btnTabLibrary.setTextColor(ContextCompat.getColor(this, R.color.white));
             btnTabPlayer.setBackgroundResource(R.drawable.bg_tab_inactive);
             btnTabPlayer.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+
+            // Animate Mini Player slide-up
+            if (playerManager.getCurrentSong() != null && miniPlayerLayout != null) {
+                miniPlayerLayout.setTranslationY(60f);
+                miniPlayerLayout.setAlpha(0f);
+                miniPlayerLayout.animate()
+                        .translationY(0f)
+                        .alpha(1f)
+                        .setDuration(280)
+                        .setInterpolator(new DecelerateInterpolator())
+                        .start();
+            }
         }
     }
 
@@ -335,6 +491,9 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
     }
 
     private void switchSubTab(int index) {
+        if (currentSubTab == index && (layoutAllSongsContainer.getVisibility() == View.VISIBLE || layoutFoldersContainer.getVisibility() == View.VISIBLE || layoutAlbumsContainer.getVisibility() == View.VISIBLE)) {
+            return;
+        }
         currentSubTab = index;
 
         btnSubTabAll.setBackgroundResource(index == 0 ? R.drawable.bg_tab_active : R.drawable.bg_tab_inactive);
@@ -346,9 +505,24 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         btnSubTabAlbums.setBackgroundResource(index == 2 ? R.drawable.bg_tab_active : R.drawable.bg_tab_inactive);
         btnSubTabAlbums.setTextColor(ContextCompat.getColor(this, index == 2 ? R.color.white : R.color.text_secondary));
 
-        layoutAllSongsContainer.setVisibility(index == 0 ? View.VISIBLE : View.GONE);
-        layoutFoldersContainer.setVisibility(index == 1 ? View.VISIBLE : View.GONE);
-        layoutAlbumsContainer.setVisibility(index == 2 ? View.VISIBLE : View.GONE);
+        View targetContainer = (index == 0) ? layoutAllSongsContainer : (index == 1 ? layoutFoldersContainer : layoutAlbumsContainer);
+        View[] otherContainers = (index == 0) ? new View[]{layoutFoldersContainer, layoutAlbumsContainer}
+                : (index == 1 ? new View[]{layoutAllSongsContainer, layoutAlbumsContainer}
+                : new View[]{layoutAllSongsContainer, layoutFoldersContainer});
+
+        for (View other : otherContainers) {
+            other.setVisibility(View.GONE);
+        }
+
+        targetContainer.setAlpha(0f);
+        targetContainer.setTranslationY(24f);
+        targetContainer.setVisibility(View.VISIBLE);
+        targetContainer.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(220)
+                .setInterpolator(new DecelerateInterpolator())
+                .start();
 
         if (index == 1) {
             refreshFoldersList();
@@ -366,22 +540,22 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
     // ==========================================
 
     private void setupPlayerControls() {
-        btnPlayPauseLarge.setOnClickListener(v -> playerManager.togglePlayPause(MainActivity.this));
-        btnPrevious.setOnClickListener(v -> playerManager.playPrevious(MainActivity.this));
-        btnNext.setOnClickListener(v -> playerManager.playNext(MainActivity.this));
+        btnPlayPauseLarge.setOnClickListener(v -> animateBounceView(v, () -> playerManager.togglePlayPause(MainActivity.this)));
+        btnPrevious.setOnClickListener(v -> animateSlideNudge(v, -16f, () -> playerManager.playPrevious(MainActivity.this)));
+        btnNext.setOnClickListener(v -> animateSlideNudge(v, 16f, () -> playerManager.playNext(MainActivity.this)));
 
-        btnShuffle.setOnClickListener(v -> {
+        btnShuffle.setOnClickListener(v -> animateBounceView(v, () -> {
             boolean active = playerManager.toggleShuffle();
             updateShuffleButton(active);
             Toast.makeText(this, active ? "Đã bật phát ngẫu nhiên (乱)" : "Đã tắt phát ngẫu nhiên", Toast.LENGTH_SHORT).show();
-        });
+        }));
 
-        btnRepeat.setOnClickListener(v -> {
+        btnRepeat.setOnClickListener(v -> animateBounceView(v, () -> {
             MusicPlayerManager.RepeatMode mode = playerManager.cycleRepeatMode();
             updateRepeatButton(mode);
-        });
+        }));
 
-        btnAudioOutput.setOnClickListener(v -> showAudioOutputDialog());
+        btnAudioOutput.setOnClickListener(v -> animateBounceView(v, this::showAudioOutputDialog));
 
         seekBarPlayer.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -414,37 +588,37 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
             Song current = playerManager.getCurrentSong();
             if (current != null) {
                 boolean fav = albumManager.toggleFavorite(current.getId());
-                updatePlayerFavoriteButton(fav);
+                animateFavoriteHeart(btnPlayerFavorite, fav);
                 Toast.makeText(this, fav ? "❤️ Đã thêm vào khúc nhạc Yêu thích" : "Đã bỏ khỏi Yêu thích", Toast.LENGTH_SHORT).show();
             }
         });
 
         // 2. Add to Themed Album
-        btnPlayerAddToAlbum.setOnClickListener(v -> {
+        btnPlayerAddToAlbum.setOnClickListener(v -> animateBounceView(v, () -> {
             Song current = playerManager.getCurrentSong();
             if (current != null) {
                 showAddToAlbumBottomSheet(current);
             }
-        });
+        }));
 
         // 3. Rename Song
-        btnPlayerRename.setOnClickListener(v -> {
+        btnPlayerRename.setOnClickListener(v -> animateBounceView(v, () -> {
             Song current = playerManager.getCurrentSong();
             if (current != null) {
                 showRenameSongDialog(current);
             }
-        });
+        }));
 
         // 4. Delete Song
-        btnPlayerDelete.setOnClickListener(v -> {
+        btnPlayerDelete.setOnClickListener(v -> animateBounceView(v, () -> {
             Song current = playerManager.getCurrentSong();
             if (current != null) {
                 showDeleteSongDialog(current, null);
             }
-        });
+        }));
 
         // 5. Jump to Queue / Library
-        btnPlayerQueue.setOnClickListener(v -> switchTab(false));
+        btnPlayerQueue.setOnClickListener(v -> animateBounceView(v, () -> switchTab(false)));
     }
 
     private void updatePlayerFavoriteButton(boolean isFavorite) {
@@ -569,26 +743,53 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
 
     private void openFolderDetail(ThemedAlbumManager.FolderGroup group) {
         currentViewingFolder = group;
-        layoutFolderDetailHeader.setVisibility(View.VISIBLE);
-        rvFolders.setVisibility(View.GONE);
-        rvFolderSongs.setVisibility(View.VISIBLE);
-        tvFoldersCount.setVisibility(View.GONE);
-
         tvCurrentFolderName.setText(group.folderName);
         tvCurrentFolderPath.setText(String.format(Locale.getDefault(), "%s · %d khúc nhạc", group.folderPath, group.getSongCount()));
         folderSongsAdapter.updateData(group.songs);
         if (etSearch != null && etSearch.getText().length() > 0) {
             folderSongsAdapter.getFilter().filter(etSearch.getText());
         }
+
+        // Smooth horizontal slide-out of folders and slide-in of folder songs
+        rvFolders.animate()
+                .alpha(0f)
+                .translationX(-50f)
+                .setDuration(160)
+                .withEndAction(() -> {
+                    rvFolders.setVisibility(View.GONE);
+                    rvFolders.setTranslationX(0f);
+
+                    layoutFolderDetailHeader.setAlpha(0f);
+                    layoutFolderDetailHeader.setTranslationX(50f);
+                    layoutFolderDetailHeader.setVisibility(View.VISIBLE);
+
+                    rvFolderSongs.setAlpha(0f);
+                    rvFolderSongs.setTranslationX(50f);
+                    rvFolderSongs.setVisibility(View.VISIBLE);
+
+                    tvFoldersCount.setVisibility(View.GONE);
+
+                    layoutFolderDetailHeader.animate().alpha(1f).translationX(0f).setDuration(220).setInterpolator(new DecelerateInterpolator()).start();
+                    rvFolderSongs.animate().alpha(1f).translationX(0f).setDuration(220).setInterpolator(new DecelerateInterpolator()).start();
+                }).start();
     }
 
     private void closeFolderDetail() {
         currentViewingFolder = null;
-        layoutFolderDetailHeader.setVisibility(View.GONE);
-        rvFolders.setVisibility(View.VISIBLE);
-        rvFolderSongs.setVisibility(View.GONE);
-        tvFoldersCount.setVisibility(View.VISIBLE);
-        refreshFoldersList();
+
+        layoutFolderDetailHeader.animate().alpha(0f).translationX(50f).setDuration(150).start();
+        rvFolderSongs.animate().alpha(0f).translationX(50f).setDuration(150).withEndAction(() -> {
+            layoutFolderDetailHeader.setVisibility(View.GONE);
+            rvFolderSongs.setVisibility(View.GONE);
+
+            rvFolders.setAlpha(0f);
+            rvFolders.setTranslationX(-50f);
+            rvFolders.setVisibility(View.VISIBLE);
+            tvFoldersCount.setVisibility(View.VISIBLE);
+
+            rvFolders.animate().alpha(1f).translationX(0f).setDuration(200).setInterpolator(new DecelerateInterpolator()).start();
+            refreshFoldersList();
+        }).start();
     }
 
     private void playFolderSongs(ThemedAlbumManager.FolderGroup group) {
@@ -631,11 +832,6 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
 
     private void openAlbumDetail(ThemedAlbum album) {
         currentViewingAlbum = album;
-        layoutAlbumDetailHeader.setVisibility(View.VISIBLE);
-        btnCreateAlbumTop.setVisibility(View.GONE);
-        rvAlbums.setVisibility(View.GONE);
-        rvAlbumSongs.setVisibility(View.VISIBLE);
-
         tvCurrentAlbumEmoji.setText(album.getEmoji());
         tvCurrentAlbumTitle.setText(album.getName());
 
@@ -645,15 +841,46 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         if (etSearch != null && etSearch.getText().length() > 0) {
             albumSongsAdapter.getFilter().filter(etSearch.getText());
         }
+
+        // Smooth horizontal slide-out of albums and slide-in of album songs
+        btnCreateAlbumTop.setVisibility(View.GONE);
+        rvAlbums.animate()
+                .alpha(0f)
+                .translationX(-50f)
+                .setDuration(160)
+                .withEndAction(() -> {
+                    rvAlbums.setVisibility(View.GONE);
+                    rvAlbums.setTranslationX(0f);
+
+                    layoutAlbumDetailHeader.setAlpha(0f);
+                    layoutAlbumDetailHeader.setTranslationX(50f);
+                    layoutAlbumDetailHeader.setVisibility(View.VISIBLE);
+
+                    rvAlbumSongs.setAlpha(0f);
+                    rvAlbumSongs.setTranslationX(50f);
+                    rvAlbumSongs.setVisibility(View.VISIBLE);
+
+                    layoutAlbumDetailHeader.animate().alpha(1f).translationX(0f).setDuration(220).setInterpolator(new DecelerateInterpolator()).start();
+                    rvAlbumSongs.animate().alpha(1f).translationX(0f).setDuration(220).setInterpolator(new DecelerateInterpolator()).start();
+                }).start();
     }
 
     private void closeAlbumDetail() {
         currentViewingAlbum = null;
-        layoutAlbumDetailHeader.setVisibility(View.GONE);
-        btnCreateAlbumTop.setVisibility(View.VISIBLE);
-        rvAlbums.setVisibility(View.VISIBLE);
-        rvAlbumSongs.setVisibility(View.GONE);
-        refreshAlbumsList();
+
+        layoutAlbumDetailHeader.animate().alpha(0f).translationX(50f).setDuration(150).start();
+        rvAlbumSongs.animate().alpha(0f).translationX(50f).setDuration(150).withEndAction(() -> {
+            layoutAlbumDetailHeader.setVisibility(View.GONE);
+            rvAlbumSongs.setVisibility(View.GONE);
+            btnCreateAlbumTop.setVisibility(View.VISIBLE);
+
+            rvAlbums.setAlpha(0f);
+            rvAlbums.setTranslationX(-50f);
+            rvAlbums.setVisibility(View.VISIBLE);
+
+            rvAlbums.animate().alpha(1f).translationX(0f).setDuration(200).setInterpolator(new DecelerateInterpolator()).start();
+            refreshAlbumsList();
+        }).start();
     }
 
     private void playAlbumSongs(ThemedAlbum album) {
@@ -689,25 +916,25 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
     // ==========================================
 
     private void setupSearchAndActions() {
-        btnOpenSync.setOnClickListener(v -> showWifiSyncDialog());
-        btnRefresh.setOnClickListener(v -> checkPermissionsAndLoadSongs());
-        btnGrantPermission.setOnClickListener(v -> checkPermissionsAndLoadSongs());
+        btnOpenSync.setOnClickListener(v -> animateBounceView(v, this::showWifiSyncDialog));
+        btnRefresh.setOnClickListener(v -> animateBounceView(v, this::checkPermissionsAndLoadSongs));
+        btnGrantPermission.setOnClickListener(v -> animateBounceView(v, this::checkPermissionsAndLoadSongs));
 
         // Sub-navigation Folder actions
-        btnFolderBack.setOnClickListener(v -> closeFolderDetail());
-        btnPlayFolderAll.setOnClickListener(v -> {
+        btnFolderBack.setOnClickListener(v -> animateSlideNudge(v, -12f, this::closeFolderDetail));
+        btnPlayFolderAll.setOnClickListener(v -> animateBounceView(v, () -> {
             if (currentViewingFolder != null) playFolderSongs(currentViewingFolder);
-        });
+        }));
 
         // Sub-navigation Album actions
-        btnAlbumBack.setOnClickListener(v -> closeAlbumDetail());
-        btnPlayAlbumAll.setOnClickListener(v -> {
+        btnAlbumBack.setOnClickListener(v -> animateSlideNudge(v, -12f, this::closeAlbumDetail));
+        btnPlayAlbumAll.setOnClickListener(v -> animateBounceView(v, () -> {
             if (currentViewingAlbum != null) playAlbumSongs(currentViewingAlbum);
-        });
-        btnAddSongsToAlbum.setOnClickListener(v -> {
+        }));
+        btnAddSongsToAlbum.setOnClickListener(v -> animateBounceView(v, () -> {
             if (currentViewingAlbum != null) showAddSongsToAlbumPicker(currentViewingAlbum);
-        });
-        btnCreateAlbumTop.setOnClickListener(v -> showCreateAlbumDialog(null));
+        }));
+        btnCreateAlbumTop.setOnClickListener(v -> animateBounceView(v, () -> showCreateAlbumDialog(null)));
 
         btnSearchClear.setOnClickListener(v -> {
             etSearch.setText("");
@@ -730,8 +957,8 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         });
 
         miniPlayerLayout.setOnClickListener(v -> switchTab(true));
-        btnMiniPlayPause.setOnClickListener(v -> playerManager.togglePlayPause(MainActivity.this));
-        btnMiniNext.setOnClickListener(v -> playerManager.playNext(MainActivity.this));
+        btnMiniPlayPause.setOnClickListener(v -> animateBounceView(v, () -> playerManager.togglePlayPause(MainActivity.this)));
+        btnMiniNext.setOnClickListener(v -> animateSlideNudge(v, 14f, () -> playerManager.playNext(MainActivity.this)));
     }
 
     private void applyCurrentSearchFilter(@Nullable CharSequence s) {
@@ -1399,8 +1626,30 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
 
     private void updatePlayerMetadata(@Nullable Song song) {
         if (song == null) return;
-        tvSheetTitle.setText(song.getTitle());
-        tvSheetArtist.setText(String.format("⚔️ %s", song.getArtist()));
+
+        // Smooth subtle slide & fade for song title and artist change
+        if (tvSheetTitle != null && tvSheetArtist != null) {
+            String newTitle = song.getTitle();
+            String newArtist = String.format("⚔️ %s", song.getArtist());
+
+            if (!newTitle.equals(tvSheetTitle.getText().toString())) {
+                tvSheetTitle.animate().alpha(0f).translationY(-6f).setDuration(120).withEndAction(() -> {
+                    tvSheetTitle.setText(newTitle);
+                    tvSheetTitle.setTranslationY(6f);
+                    tvSheetTitle.animate().alpha(1f).translationY(0f).setDuration(160).setInterpolator(new DecelerateInterpolator()).start();
+                }).start();
+
+                tvSheetArtist.animate().alpha(0f).translationY(-6f).setDuration(120).withEndAction(() -> {
+                    tvSheetArtist.setText(newArtist);
+                    tvSheetArtist.setTranslationY(6f);
+                    tvSheetArtist.animate().alpha(1f).translationY(0f).setDuration(160).setInterpolator(new DecelerateInterpolator()).start();
+                }).start();
+            } else {
+                tvSheetTitle.setText(newTitle);
+                tvSheetArtist.setText(newArtist);
+            }
+        }
+
         tvTotalTime.setText(song.getFormattedDuration());
         seekBarPlayer.setMax((int) song.getDuration());
 
@@ -1422,11 +1671,13 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
             } else if (!discAnimator.isRunning()) {
                 discAnimator.start();
             }
+            startTsubaGlow();
         } else {
             tvPlayerBadge.setText("TẠM DỪNG");
             if (discAnimator.isRunning()) {
                 discAnimator.pause();
             }
+            pauseTsubaGlow();
         }
     }
 
@@ -1590,5 +1841,8 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         if (discAnimator != null) {
             discAnimator.cancel();
         }
+        if (tsubaGlowScaleXAnimator != null) tsubaGlowScaleXAnimator.cancel();
+        if (tsubaGlowScaleYAnimator != null) tsubaGlowScaleYAnimator.cancel();
+        if (tsubaGlowAlphaAnimator != null) tsubaGlowAlphaAnimator.cancel();
     }
 }

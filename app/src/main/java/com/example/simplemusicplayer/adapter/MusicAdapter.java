@@ -130,16 +130,22 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.SongViewHold
         }
 
         holder.itemView.setOnClickListener(v -> {
-            if (clickListener != null) {
-                int origIdx = fullSongList.indexOf(song);
-                clickListener.onSongClick(song, origIdx >= 0 ? origIdx : position);
-            }
+            v.animate().scaleX(0.97f).scaleY(0.97f).setDuration(70).withEndAction(() -> {
+                v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                if (clickListener != null) {
+                    int origIdx = fullSongList.indexOf(song);
+                    clickListener.onSongClick(song, origIdx >= 0 ? origIdx : position);
+                }
+            }).start();
         });
 
         holder.btnOptions.setOnClickListener(v -> {
-            if (optionsListener != null) {
-                optionsListener.onSongOptionsClick(song, v);
-            }
+            v.animate().scaleX(0.85f).scaleY(0.85f).setDuration(70).withEndAction(() -> {
+                v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                if (optionsListener != null) {
+                    optionsListener.onSongOptionsClick(song, v);
+                }
+            }).start();
         });
     }
 

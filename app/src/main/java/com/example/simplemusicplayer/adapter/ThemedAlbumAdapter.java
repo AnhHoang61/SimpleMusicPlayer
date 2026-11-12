@@ -63,15 +63,24 @@ public class ThemedAlbumAdapter extends RecyclerView.Adapter<ThemedAlbumAdapter.
         holder.tvSubtitle.setText(String.format(Locale.getDefault(), "%d khúc nhạc", album.getSongCount()));
 
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) listener.onAlbumClick(album);
+            v.animate().scaleX(0.97f).scaleY(0.97f).setDuration(70).withEndAction(() -> {
+                v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                if (listener != null) listener.onAlbumClick(album);
+            }).start();
         });
 
         holder.btnPlay.setOnClickListener(v -> {
-            if (listener != null) listener.onPlayAlbum(album);
+            v.animate().scaleX(0.85f).scaleY(0.85f).setDuration(70).withEndAction(() -> {
+                v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                if (listener != null) listener.onPlayAlbum(album);
+            }).start();
         });
 
         holder.btnOptions.setOnClickListener(v -> {
-            if (listener != null) listener.onAlbumOptions(album, v);
+            v.animate().scaleX(0.85f).scaleY(0.85f).setDuration(70).withEndAction(() -> {
+                v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                if (listener != null) listener.onAlbumOptions(album, v);
+            }).start();
         });
     }
 
