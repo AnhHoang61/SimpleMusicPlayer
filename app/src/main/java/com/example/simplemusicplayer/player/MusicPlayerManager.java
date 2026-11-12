@@ -298,6 +298,15 @@ public class MusicPlayerManager implements MediaPlayer.OnCompletionListener,
         return mediaPlayer != null && mediaPlayer.isPlaying();
     }
 
+    public int getAudioSessionId() {
+        if (mediaPlayer != null) {
+            try {
+                return mediaPlayer.getAudioSessionId();
+            } catch (Exception ignored) {}
+        }
+        return 0;
+    }
+
     public boolean isShuffle() {
         return isShuffle;
     }

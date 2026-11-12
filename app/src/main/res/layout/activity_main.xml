@@ -195,25 +195,35 @@
                     android:layout_height="0dp"
                     android:layout_weight="0.8" />
 
-                <!-- Central Rotating Katana Tsuba Disc -->
+                <!-- Central Rotating Katana Tsuba Disc & Audio Wave Visualizer -->
                 <FrameLayout
                     android:id="@+id/layoutDiscContainer"
-                    android:layout_width="260dp"
-                    android:layout_height="260dp"
-                    android:layout_marginVertical="8dp">
+                    android:layout_width="290dp"
+                    android:layout_height="290dp"
+                    android:layout_marginVertical="4dp"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <!-- Circular Audio Wave Visualizer (Radial Bars, Ripples, Wave Ribbon) -->
+                    <com.example.simplemusicplayer.view.VinylWaveVisualizerView
+                        android:id="@+id/viewVinylWaveVisualizer"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center" />
 
                     <!-- Ambient Glow Ring -->
                     <View
                         android:id="@+id/viewTsubaGlow"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_width="236dp"
+                        android:layout_height="236dp"
+                        android:layout_gravity="center"
                         android:background="@drawable/bg_tsuba_glow" />
 
                     <!-- Photorealistic Antique Katana Tsuba Sword Guard -->
                     <ImageView
                         android:id="@+id/viewVinylDisc"
-                        android:layout_width="240dp"
-                        android:layout_height="240dp"
+                        android:layout_width="220dp"
+                        android:layout_height="220dp"
                         android:layout_gravity="center"
                         android:scaleType="fitCenter"
                         android:src="@drawable/img_tsuba_disc" />

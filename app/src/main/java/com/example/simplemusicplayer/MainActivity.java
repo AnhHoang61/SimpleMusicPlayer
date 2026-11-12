@@ -23,6 +23,7 @@ import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -30,6 +31,8 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.simplemusicplayer.view.VinylWaveVisualizerView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -77,6 +80,8 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
     // Full Samurai Player components (Main Screen)
     private ImageView viewVinylDisc;
     private View viewTsubaGlow;
+    private FrameLayout layoutDiscContainer;
+    private VinylWaveVisualizerView viewVinylWaveVisualizer;
     private ObjectAnimator discAnimator;
     private ObjectAnimator tsubaGlowScaleXAnimator;
     private ObjectAnimator tsubaGlowScaleYAnimator;
@@ -199,6 +204,8 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         layoutLibraryView = findViewById(R.id.layoutLibraryView);
 
         // Player elements
+        layoutDiscContainer = findViewById(R.id.layoutDiscContainer);
+        viewVinylWaveVisualizer = findViewById(R.id.viewVinylWaveVisualizer);
         viewVinylDisc = findViewById(R.id.viewVinylDisc);
         viewTsubaGlow = findViewById(R.id.viewTsubaGlow);
         tvPlayerBadge = findViewById(R.id.tvPlayerBadge);
@@ -540,6 +547,18 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
     // ==========================================
 
     private void setupPlayerControls() {
+        if (layoutDiscContainer != null) {
+            layoutDiscContainer.setOnClickListener(v -> {
+                animateBounceView(viewVinylDisc, null);
+                if (viewVinylWaveVisualizer != null) {
+                    int style = viewVinylWaveVisualizer.cycleWaveStyle();
+                    String styleName = (style == 0) ? "Đầy đủ: Sóng âm & Thanh phổ (全)"
+                            : (style == 1 ? "Vòng sóng âm lan tỏa (波)" : "Thanh phổ sóng Neon (光)");
+                    Toast.makeText(this, "🌊 Kiểu sóng nhạc: " + styleName, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
         btnPlayPauseLarge.setOnClickListener(v -> animateBounceView(v, () -> playerManager.togglePlayPause(MainActivity.this)));
         btnPrevious.setOnClickListener(v -> animateSlideNudge(v, -16f, () -> playerManager.playPrevious(MainActivity.this)));
         btnNext.setOnClickListener(v -> animateSlideNudge(v, 16f, () -> playerManager.playNext(MainActivity.this)));
@@ -1672,12 +1691,19 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
                 discAnimator.start();
             }
             startTsubaGlow();
+            if (viewVinylWaveVisualizer != null) {
+                viewVinylWaveVisualizer.setAudioSessionId(playerManager.getAudioSessionId());
+                viewVinylWaveVisualizer.start();
+            }
         } else {
             tvPlayerBadge.setText("TẠM DỪNG");
             if (discAnimator.isRunning()) {
                 discAnimator.pause();
             }
             pauseTsubaGlow();
+            if (viewVinylWaveVisualizer != null) {
+                viewVinylWaveVisualizer.pause();
+            }
         }
     }
 
@@ -1719,6 +1745,13 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         musicAdapter.setCurrentPlayingSongId(song.getId());
         if (folderSongsAdapter != null) folderSongsAdapter.setCurrentPlayingSongId(song.getId());
         if (albumSongsAdapter != null) albumSongsAdapter.setCurrentPlayingSongId(song.getId());
+
+        if (viewVinylWaveVisualizer != null) {
+            viewVinylWaveVisualizer.setAudioSessionId(playerManager.getAudioSessionId());
+            if (playerManager.isPlaying()) {
+                viewVinylWaveVisualizer.start();
+            }
+        }
     }
 
     @Override
@@ -1844,5 +1877,8 @@ public class MainActivity extends AppCompatActivity implements MusicPlayerManage
         if (tsubaGlowScaleXAnimator != null) tsubaGlowScaleXAnimator.cancel();
         if (tsubaGlowScaleYAnimator != null) tsubaGlowScaleYAnimator.cancel();
         if (tsubaGlowAlphaAnimator != null) tsubaGlowAlphaAnimator.cancel();
+        if (viewVinylWaveVisualizer != null) {
+            viewVinylWaveVisualizer.pause();
+        }
     }
 }
