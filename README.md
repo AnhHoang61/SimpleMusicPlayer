@@ -14,13 +14,21 @@
 - **Tìm kiếm tức thì (Instant Search):** Lọc bài hát theo tên hoặc ca sĩ ngay khi nhập liệu.
 - **Thanh Mini Player:** Thu gọn ở cạnh đáy màn hình để thao tác nhanh Play/Pause và chuyển bài khi đang duyệt danh sách.
 - **Màn hình Full Player (Samurai Katana Edition):**
+  - **Sóng nhạc đĩa than 60 FPS (Circular Audio Wave Visualizer):** 64 cột sóng âm thanh tỏa tia, vòng sóng âm lan tỏa (acoustic shockwave ripples), và dải sóng lượn neon uốn lượn liên tục quanh vành đĩa Tsuba. Chạm vào đĩa than để kích hoạt xung kích sóng âm và đổi kiểu sóng (Đầy đủ, Vòng sóng, Sóng Neon).
+  - **Hào quang Kiếm Tsuba (Spiritual Aura Breathing Pulse):** Vầng hào quang ánh ngọc lam co giãn nhịp nhàng khi phát nhạc và tắt nhẹ khi tạm dừng.
   - Hiệu ứng đĩa Tsuba xoay mượt mà khi phát nhạc và tự động dừng khi tạm dừng.
   - Thanh tua nhạc lưỡi kiếm Katana (SeekBar) với chuôi kiếm (Tsuka) và mũi kiếm (Kissaki).
+  - Phản hồi xúc giác vi mô (Micro-interactions): Nảy đàn hồi Play/Pause/Shuffle/Repeat, nhích lướt Next/Previous, trái tim Yêu thích nảy pop.
   - Chế độ **Phát ngẫu nhiên (Shuffle)** và **Lặp lại (Repeat One / Repeat All)**.
   - **Thanh công cụ nhanh (Quick Actions Toolbar):** Lấp đầy khoảng trống cạnh dưới với các phím bấm tiện ích: Yêu thích (❤️), Thêm vào Album chủ đề (➕), Đổi tên (✏️), Xóa nhạc (🗑️), và xem hàng đợi (📋).
   - Huy hiệu nguồn phát (Source Badge) hiển thị rõ đang phát từ Album chủ đề, Thư mục hay Tất cả.
+- **Đồng bộ thời gian thực qua Wi-Fi (Real-time Wi-Fi Sync & Desktop Companion):**
+  - Tự động phát hiện PC trong mạng Wi-Fi qua UDP Beacon (Port 8888).
+  - Đồng bộ tức thì (sub-second sync) qua luồng sự kiện Server-Sent Events (SSE).
+  - Kèm ứng dụng Desktop Companion & Windows Service trong thư mục `desktop-companion/`.
 - **Quản lý Thư mục & Đổi tên, Xóa nhạc:**
   - **Duyệt theo Thư mục máy:** Nhóm các bài hát theo thư mục thực tế trên bộ nhớ máy (Music, Download, V-Music...), cho phép mở xem và phát toàn bộ thư mục với 1 chạm.
+  - **Chuyển cảnh lướt ngang mượt mà (Horizontal Drill Navigation):** Mở xem chi tiết thư mục và album với hiệu ứng trượt mượt mà.
   - **Đổi tên khúc nhạc (Rename):** Đổi tên bài hát ngay trong ứng dụng, lưu trữ lâu dài và tự động cập nhật trên toàn bộ danh sách, thông báo và widget.
   - **Xóa bài hát an toàn (Delete):** Xóa khỏi Album chủ đề hoặc xóa vĩnh viễn khỏi thiết bị với hộp thoại xác nhận an toàn.
 - **Tạo Album theo chủ đề (Themed Albums):**
@@ -43,23 +51,38 @@ V-Music/
 │   └── src/main/
 │       ├── AndroidManifest.xml
 │       ├── java/com/example/simplemusicplayer/
-│       │   ├── MainActivity.java               # Điều phối giao diện người dùng, Tabs & Controls
+│       │   ├── MainActivity.java               # Điều phối giao diện người dùng, Tabs, Animation & Controls
 │       │   ├── adapter/
-│       │   │   └── MusicAdapter.java           # Adapter danh sách bài hát & bộ lọc tìm kiếm
+│       │   │   ├── FolderAdapter.java          # Adapter thư mục chứa nhạc
+│       │   │   ├── MusicAdapter.java           # Adapter danh sách bài hát & bộ lọc tìm kiếm
+│       │   │   └── ThemedAlbumAdapter.java     # Adapter album chủ đề
+│       │   ├── manager/
+│       │   │   └── ThemedAlbumManager.java     # Quản lý album chủ đề, danh sách yêu thích & tên bài hát
 │       │   ├── model/
-│       │   │   └── Song.java                   # Entity mô hình dữ liệu bài hát
+│       │   │   ├── Song.java                   # Entity mô hình dữ liệu bài hát
+│       │   │   └── ThemedAlbum.java            # Entity album chủ đề
 │       │   ├── player/
 │       │   │   └── MusicPlayerManager.java     # Singleton điều khiển MediaPlayer & thứ tự phát
 │       │   ├── service/
 │       │   │   └── MusicService.java           # Foreground Service, Notification & Android Auto
-│       │   └── util/
-│       │       ├── AudioDeviceHelper.java      # Quản lý phát hiện & nhãn cổng âm thanh (Speaker/BT/USB)
-│       │       ├── MusicLoader.java            # Quét & nạp danh sách nhạc từ MediaStore bất đồng bộ
-│       │       └── TimeUtils.java              # Tiện ích định dạng thời gian chuẩn mm:ss / hh:mm:ss
+│       │   ├── sync/
+│       │   │   └── SyncManager.java            # Đồng bộ Wi-Fi 3 lớp (SSE, UDP Beacon, Polling)
+│       │   ├── util/
+│       │   │   ├── AudioDeviceHelper.java      # Quản lý phát hiện & nhãn cổng âm thanh (Speaker/BT/USB)
+│       │   │   ├── MusicLoader.java            # Quét & nạp danh sách nhạc từ MediaStore bất đồng bộ
+│       │   │   └── TimeUtils.java              # Tiện ích định dạng thời gian chuẩn mm:ss / hh:mm:ss
+│       │   └── view/
+│       │       └── VinylWaveVisualizerView.java# Sóng nhạc đĩa than 60 FPS (Radial Bars, Ripples, Ribbon)
 │       └── res/
-│           ├── layout/                         # Giao diện XML (activity_main, item_song, bottom_sheet_audio_output)
+│           ├── layout/                         # Giao diện XML (activity_main, bottom sheets, dialogs)
 │           ├── drawable/                       # Vector kiếm Katana, đĩa Tsuba, Icons & Shapes
-│           └── values/                         # Colors, Strings, Themes
+│           └── values/                         # Colors (Samurai Palette), Strings, Themes
+└── desktop-companion/                          # Ứng dụng Desktop Companion & Windows Service
+    ├── server.js                               # Node.js Sync Engine (HTTP 8899, UDP 8888, SSE)
+    ├── VMusicDesktop.cs / .exe                 # Desktop System Tray GUI Application
+    ├── VMusicService.cs / .exe                 # Windows Background Service
+    ├── install-windows-service.bat             # Cài đặt tự khởi động cùng Windows
+    └── public/                                 # Giao diện quản lý Web Browser & Logo Samurai
 ```
 
 ---

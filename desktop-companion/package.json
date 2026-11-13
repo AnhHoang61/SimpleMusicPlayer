@@ -1,0 +1,12 @@
+{
+  "name": "v-music-desktop-sync",
+  "version": "1.0.0",
+  "description": "V-Music Desktop Wi-Fi Auto Sync Server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["music", "sync", "v-music"],
+  "author": "V-Music",
+  "license": "MIT"
+}

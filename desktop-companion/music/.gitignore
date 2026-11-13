@@ -1,0 +1,11 @@
+# Ignore user audio files
+*.mp3
+*.m4a
+*.wav
+*.flac
+*.aac
+*.ogg
+
+# Keep folder
+!.gitignore
+!README.txt

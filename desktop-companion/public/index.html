@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-Music Desktop Sync · Samurai Edition</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        :root {
+            --bg-dark: #0d0f12;
+            --bg-card: #161a22;
+            --bg-card-hover: #1f2430;
+            --primary-accent: #e63946;
+            --accent-gold: #d4af37;
+            --text-primary: #ffffff;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+            --success-color: #2ea043;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Top Header */
+        header {
+            background: rgba(22, 26, 34, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #e63946, #b01e2b);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 20px;
+            color: var(--accent-gold);
+            border: 1px solid var(--accent-gold);
+            box-shadow: 0 0 15px rgba(230, 57, 70, 0.4);
+        }
+
+        .brand-text h1 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-text p {
+            font-size: 11px;
+            color: var(--accent-gold);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .server-status {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(46, 160, 67, 0.15);
+            border: 1px solid rgba(46, 160, 67, 0.4);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #56d364;
+            font-weight: 600;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #2ea043;
+            border-radius: 50%;
+            animation: pulse 1.6s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(46, 160, 67, 0); }
+            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(46, 160, 67, 0); }
+        }
+
+        .btn-action {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-action:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        /* Main Container */
+        main {
+            flex: 1;
+            padding: 24px 28px;
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Drag & Drop Zone */
+        .dropzone-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .dropzone {
+            background: var(--bg-card);
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 44px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--primary-accent);
+            background: rgba(230, 57, 70, 0.05);
+            box-shadow: 0 0 25px rgba(230, 57, 70, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .dropzone-icon {
+            font-size: 44px;
+            margin-bottom: 14px;
+            filter: drop-shadow(0 4px 10px rgba(212, 175, 55, 0.4));
+        }
+
+        .dropzone-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .dropzone-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .dropzone-formats {
+            display: flex;
+            gap: 8px;
+        }
+
+        .format-tag {
+            background: rgba(255, 255, 255, 0.06);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            letter-spacing: 0.5px;
+        }
+
+        /* Song List Card */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-count {
+            background: var(--primary-accent);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .song-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .song-table th {
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            font-weight: 600;
+        }
+
+        .song-table td {
+            padding: 12px;
+            font-size: 13px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .song-row:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .song-title-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .song-icon {
+            color: var(--accent-gold);
+            font-size: 16px;
+        }
+
+        .btn-delete {
+            background: transparent;
+            border: none;
+            color: #f85149;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            opacity: 0.7;
+            transition: all 0.2s;
+        }
+
+        .btn-delete:hover {
+            opacity: 1;
+            background: rgba(248, 81, 73, 0.15);
+        }
+
+        /* Right Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 13px;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--accent-gold);
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 12px;
+            border-left: 3px solid var(--accent-gold);
+        }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .activity-desc {
+            color: var(--text-secondary);
+        }
+
+        /* Upload progress bar */
+        #progressContainer {
+            display: none;
+            margin-top: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            height: 10px;
+            overflow: hidden;
+            width: 80%;
+        }
+
+        #progressBar {
+            background: linear-gradient(90deg, #e63946, #d4af37);
+            height: 100%;
+            width: 0%;
+            transition: width 0.15s ease;
+        }
+
+        /* Empty state */
+        .empty-state {
+            padding: 30px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="brand-container">
+            <img src="/logo.png" class="brand-logo" alt="V-Music Logo" style="object-fit: cover;">
+            <div class="brand-text">
+                <h1>V-Music Desktop Sync</h1>
+                <p>武士の響 · Wi-Fi Auto Synchronization</p>
+            </div>
+        </div>
+
+        <div class="server-status">
+            <div class="status-badge">
+                <div class="pulse-dot"></div>
+                <span id="beaconStatus">Sẵn sàng đồng bộ (Port 8899)</span>
+            </div>
+            <button class="btn-action" style="border-color: var(--primary-accent); color: var(--primary-accent);" onclick="triggerSyncToPhone()">
+                📱 Đồng bộ tới điện thoại ngay
+            </button>
+            <button class="btn-action" onclick="openMusicFolder()">
+                📂 Mở thư mục nhạc PC
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Left Column: Dropzone & Song List -->
+        <div class="dropzone-container">
+            <!-- Dropzone -->
+            <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" multiple accept=".mp3,.m4a,.wav,.flac,.ogg,.aac" style="display: none;" onchange="handleFileSelect(event)">
+                <div class="dropzone-icon">⚔️🎵</div>
+                <div class="dropzone-title">KÉO & THẢ NHẠC VÀO ĐÂY ĐỂ ĐỒNG BỘ</div>
+                <div class="dropzone-subtitle">Nhạc sẽ tự động xuất hiện trên điện thoại V-Music khi vào cùng mạng Wi-Fi</div>
+                <div class="dropzone-formats">
+                    <span class="format-tag">MP3</span>
+                    <span class="format-tag">FLAC</span>
+                    <span class="format-tag">M4A</span>
+                    <span class="format-tag">WAV</span>
+                </div>
+                <div id="progressContainer">
+                    <div id="progressBar"></div>
+                </div>
+            </div>
+
+            <!-- Song List Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>Danh mục nhạc trên máy tính</span>
+                        <span class="badge-count" id="songCount">0</span>
+                    </div>
+                    <button class="btn-action" onclick="fetchSongs()" style="padding: 4px 10px; font-size: 11px;">
+                        🔄 Làm mới
+                    </button>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="song-table">
+                        <thead>
+                            <tr>
+                                <th>Tên bài hát</th>
+                                <th>Định dạng</th>
+                                <th>Dung lượng</th>
+                                <th style="text-align: right;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="songTableBody">
+                            <!-- Injected by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="emptyState" class="empty-state">
+                    Chưa có bài hát nào trong thư mục đồng bộ.<br>Hãy kéo thả file nhạc vào ô phía trên để bắt đầu!
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Network Info & Live Sync Activity -->
+        <div class="sidebar">
+            <!-- Network Connection Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🌐 Mạng & Kết nối</div>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Máy tính:</span>
+                    <span class="info-value" id="hostname">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Địa chỉ IP LAN:</span>
+                    <span class="info-value" id="ipAddress">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Cổng HTTP:</span>
+                    <span class="info-value">8899</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Cổng UDP Beacon:</span>
+                    <span class="info-value">8888 (Tự phát hiện)</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Tổng dung lượng:</span>
+                    <span class="info-value" id="totalSize">0 MB</span>
+                </div>
+            </div>
+
+            <!-- Live Sync History Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📱 Nhật ký thiết bị đồng bộ</div>
+                </div>
+                <div class="activity-list" id="activityList">
+                    <div class="empty-state" style="padding: 16px;">Chưa có lượt đồng bộ nào.<br>Đang chờ điện thoại vào Wi-Fi...</div>
+                </div>
+            </div>
+
+            <!-- How it works guide -->
+            <div class="card" style="background: rgba(212, 175, 55, 0.05); border-color: rgba(212, 175, 55, 0.2);">
+                <div class="card-title" style="color: var(--accent-gold); margin-bottom: 8px;">
+                    💡 Hướng dẫn hoạt động
+                </div>
+                <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
+                    1. Kéo thả file nhạc vào cửa sổ này.<br>
+                    2. Mở ứng dụng <strong>V-Music</strong> trên điện thoại có cùng Wi-Fi.<br>
+                    3. Điện thoại sẽ tự động phát hiện máy tính và tải ngay các bài hát mới vào thư mục nhạc!
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Setup Drag & Drop
+        const dropzone = document.getElementById('dropzone');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropzone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+            }, false);
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            uploadFiles(files);
+        });
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            uploadFiles(files);
+        }
+
+        async function uploadFiles(files) {
+            if (!files || files.length === 0) return;
+
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                try {
+                    const res = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
+                        method: 'POST',
+                        body: file
+                    });
+                    const pct = Math.round(((i + 1) / files.length) * 100);
+                    progressBar.style.width = `${pct}%`;
+                } catch (err) {
+                    console.error('Upload error:', err);
+                }
+            }
+
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+                fetchSongs();
+                fetchStatus();
+            }, 500);
+        }
+
+        async function fetchSongs() {
+            try {
+                const res = await fetch('/api/songs');
+                const data = await res.json();
+                renderSongs(data.songs || []);
+            } catch (err) {
+                console.error('Failed to fetch songs:', err);
+            }
+        }
+
+        function renderSongs(songs) {
+            const tbody = document.getElementById('songTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const countEl = document.getElementById('songCount');
+
+            countEl.textContent = songs.length;
+            tbody.innerHTML = '';
+
+            if (songs.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+            emptyState.style.display = 'none';
+
+            songs.forEach(song => {
+                const tr = document.createElement('tr');
+                tr.className = 'song-row';
+                tr.innerHTML = `
+                    <td class="song-title-cell">
+                        <span class="song-icon">🎵</span>
+                        <span>${escapeHtml(song.filename)}</span>
+                    </td>
+                    <td><span class="format-tag">${escapeHtml(song.extension)}</span></td>
+                    <td style="color: var(--text-secondary);">${song.sizeFormatted}</td>
+                    <td style="text-align: right;">
+                        <button class="btn-delete" title="Xóa bài hát này" onclick="deleteSong('${encodeURIComponent(song.filename)}')">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function deleteSong(encodedFilename) {
+            if (!confirm('Bạn có chắc chắn muốn xóa bài hát này khỏi danh mục đồng bộ?')) return;
+            try {
+                await fetch(`/api/songs/${encodedFilename}`, { method: 'DELETE' });
+                fetchSongs();
+                fetchStatus();
+            } catch (err) {
+                alert('Lỗi khi xóa bài hát');
+            }
+        }
+
+        async function fetchStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+
+                document.getElementById('hostname').textContent = data.hostname || '-';
+                if (data.ipAddresses && data.ipAddresses.length > 0) {
+                    document.getElementById('ipAddress').textContent = data.ipAddresses.map(i => i.address).join(', ');
+                }
+                const totalMb = (data.totalSize / (1024 * 1024)).toFixed(1);
+                document.getElementById('totalSize').textContent = `${totalMb} MB`;
+
+                // Render sync history
+                const activityList = document.getElementById('activityList');
+                if (data.syncHistory && data.syncHistory.length > 0) {
+                    activityList.innerHTML = '';
+                    data.syncHistory.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'activity-item';
+                        div.innerHTML = `
+                            <div class="activity-header">
+                                <span>📱 ${escapeHtml(item.deviceName)}</span>
+                                <span style="font-size: 11px; color: var(--accent-gold);">${escapeHtml(item.time)}</span>
+                            </div>
+                            <div class="activity-desc">Đã đồng bộ thành công ${item.syncedCount} khúc nhạc</div>
+                        `;
+                        activityList.appendChild(div);
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to fetch status:', err);
+            }
+        }
+
+        async function triggerSyncToPhone() {
+            try {
+                const res = await fetch('/api/trigger-sync', { method: 'POST' });
+                const data = await res.json();
+                alert(data.message || 'Đã gửi lệnh đồng bộ tức thì tới điện thoại!');
+                fetchStatus();
+            } catch (err) {
+                alert('Không thể gửi lệnh đồng bộ: ' + err.message);
+            }
+        }
+
+        async function openMusicFolder() {
+            try {
+                await fetch('/api/open-folder', { method: 'POST' });
+            } catch (err) {
+                console.error('Could not open folder');
+            }
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+            });
+        }
+
+        // Initialize and polling
+        fetchSongs();
+        fetchStatus();
+        setInterval(fetchStatus, 4000);
+        setInterval(fetchSongs, 6000);
+    </script>
+</body>
+</html>
